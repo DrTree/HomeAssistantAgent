@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from pydantic_ai import Agent
-from pydantic_ai.chat_ui import ChatUI
+from pydantic_ai.ui import ChatUI
 from pydantic_ai.models.openai import OpenAIModel
 
 PORT = 5050
