@@ -1,8 +1,8 @@
 {
-  "name": "Stub OpenAI Addon",
+  "name": "HomeAssistantAgent",
   "version": "0.1.0",
-  "slug": "stub_openai_addon",
-  "description": "Stub Home Assistant add-on that exposes a simple HTTP server.",
+  "slug": "homeassistantagent",
+  "description": "Home Assistant add-on that exposes a simple HTTP server.",
   "startup": "services",
   "boot": "auto",
   "arch": [
