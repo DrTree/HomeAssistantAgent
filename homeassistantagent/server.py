@@ -1,8 +1,9 @@
 import json
+import os
 from pathlib import Path
 
 from pydantic_ai import Agent
-from pydantic_ai.chat_ui import ChatUI
+from pydantic_ai.ui import ChatUI
 from pydantic_ai.models.openai import OpenAIModel
 
 PORT = 5050
@@ -14,6 +15,9 @@ MODEL_NAME = "gpt-4o"
 
 
 def load_api_key() -> str:
+    env_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if env_key:
+        return env_key
     for path in CONFIG_PATHS:
         if path.exists():
             with path.open("r", encoding="utf-8") as handle:
