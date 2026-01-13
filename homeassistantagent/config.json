@@ -2,7 +2,7 @@
   "name": "HomeAssistantAgent",
   "version": "0.1.0",
   "slug": "homeassistantagent",
-  "description": "Home Assistant add-on that exposes a simple HTTP server.",
+  "description": "Home Assistant add-on that provides a PydanticAI chat UI.",
   "startup": "services",
   "boot": "auto",
   "arch": [
@@ -16,7 +16,7 @@
     "5050/tcp": 5050
   },
   "ports_description": {
-    "5050/tcp": "Stub HTTP server"
+    "5050/tcp": "PydanticAI chat UI"
   },
   "options": {
     "openai_api_key": ""
