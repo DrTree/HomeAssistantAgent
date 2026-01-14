@@ -46,20 +46,37 @@ def load_api_key() -> str:
 
 
 api_key = load_api_key()
-if not api_key:
-    raise RuntimeError(
-        "OpenAI API key not configured. Set openai_api_key in the add-on options."
+if api_key:
+    os.environ.setdefault("OPENAI_API_KEY", api_key)
+    model = OpenAIChatModel(MODEL_NAME)
+    agent = Agent(
+        model,
+        system_prompt="You are a helpful Home Assistant companion.",
     )
-os.environ.setdefault("OPENAI_API_KEY", api_key)
+    app = agent.to_web()
+    app.add_middleware(IngressPathMiddleware)
+else:
+    async def app(scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            return
+        message = (
+            "OpenAI API key not configured. "
+            "Set openai_api_key in the add-on options and restart the add-on."
+        )
+        body = message.encode("utf-8")
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [
+                    (b"content-type", b"text/plain; charset=utf-8"),
+                    (b"content-length", str(len(body)).encode("ascii")),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body})
 
-model = OpenAIChatModel(MODEL_NAME)
-agent = Agent(
-    model,
-    system_prompt="You are a helpful Home Assistant companion.",
-)
-
-app = agent.to_web()
-app.add_middleware(IngressPathMiddleware)
+    app = IngressPathMiddleware(app)
 
 if __name__ == "__main__":
     import uvicorn
