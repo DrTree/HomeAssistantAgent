@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIChatModel
-from starlette.types import ASGIApp, Receive, Scope, Send
+from starlette.types import Receive, Scope, Send
 
 PORT = 5050
 CONFIG_PATHS = (
@@ -12,34 +12,6 @@ CONFIG_PATHS = (
     Path("/config/options.json"),
 )
 MODEL_NAME = "gpt-4o"
-
-
-class IngressPathMiddleware:
-    def __init__(self, app: ASGIApp) -> None:
-        self.app = app
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] in {"http", "websocket"}:
-            headers = {
-                key.decode("latin-1").lower(): value.decode("latin-1")
-                for key, value in scope.get("headers", [])
-            }
-            ingress_path = headers.get("x-ingress-path")
-            updated_scope = None
-            if ingress_path:
-                updated_scope = dict(scope) if updated_scope is None else updated_scope
-                updated_scope["root_path"] = ingress_path.rstrip("/")
-            path = scope.get("path", "")
-            if path.startswith("//"):
-                updated_scope = dict(scope) if updated_scope is None else updated_scope
-                normalized_path = "/" + path.lstrip("/")
-                updated_scope["path"] = normalized_path
-                raw_path = scope.get("raw_path")
-                if isinstance(raw_path, (bytes, bytearray)):
-                    updated_scope["raw_path"] = normalized_path.encode("ascii")
-            if updated_scope is not None:
-                scope = updated_scope
-        await self.app(scope, receive, send)
 
 
 def load_api_key() -> str:
@@ -65,7 +37,6 @@ if api_key:
         system_prompt="You are a helpful Home Assistant companion.",
     )
     app = agent.to_web()
-    app.add_middleware(IngressPathMiddleware)
 else:
     async def app(scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -86,8 +57,6 @@ else:
             }
         )
         await send({"type": "http.response.body", "body": body})
-
-    app = IngressPathMiddleware(app)
 
 if __name__ == "__main__":
     import uvicorn
