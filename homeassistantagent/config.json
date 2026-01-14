@@ -1,6 +1,6 @@
 {
   "name": "HomeAssistantAgent",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "slug": "homeassistantagent",
   "description": "Home Assistant add-on that provides a PydanticAI chat UI.",
   "startup": "services",
@@ -20,7 +20,6 @@
   },
   "ingress": true,
   "ingress_port": 5050,
-  "ingress_entry": "/",
   "options": {
     "openai_api_key": ""
   },
