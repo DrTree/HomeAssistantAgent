@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from pydantic_ai import Agent
-from pydantic_ai.ui import ChatUI
+from pydantic_ai.ui._web import create_web_app
 from pydantic_ai.models.openai import OpenAIModel
 
 PORT = 5050
@@ -40,7 +40,7 @@ agent = Agent(
     system_prompt="You are a helpful Home Assistant companion.",
 )
 
-app = ChatUI(agent).app
+app = create_web_app(agent)
 
 if __name__ == "__main__":
     import uvicorn
