@@ -1,2 +1,2 @@
-pydantic-ai-slim[ui,openai]
+pydantic-ai-slim[web,openai]
 uvicorn
