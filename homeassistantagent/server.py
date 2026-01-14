@@ -25,9 +25,20 @@ class IngressPathMiddleware:
                 for key, value in scope.get("headers", [])
             }
             ingress_path = headers.get("x-ingress-path")
+            updated_scope = None
             if ingress_path:
-                scope = dict(scope)
-                scope["root_path"] = ingress_path.rstrip("/")
+                updated_scope = dict(scope) if updated_scope is None else updated_scope
+                updated_scope["root_path"] = ingress_path.rstrip("/")
+            path = scope.get("path", "")
+            if path.startswith("//"):
+                updated_scope = dict(scope) if updated_scope is None else updated_scope
+                normalized_path = "/" + path.lstrip("/")
+                updated_scope["path"] = normalized_path
+                raw_path = scope.get("raw_path")
+                if isinstance(raw_path, (bytes, bytearray)):
+                    updated_scope["raw_path"] = normalized_path.encode("ascii")
+            if updated_scope is not None:
+                scope = updated_scope
         await self.app(scope, receive, send)
 
 
