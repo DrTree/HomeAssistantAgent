@@ -33,12 +33,11 @@ def load_server_module():
     fake_models = types.ModuleType("pydantic_ai.models")
     fake_openai = types.ModuleType("pydantic_ai.models.openai")
 
-    class OpenAIModel:
-        def __init__(self, name, api_key):
+    class OpenAIChatModel:
+        def __init__(self, name):
             self.name = name
-            self.api_key = api_key
 
-    fake_openai.OpenAIModel = OpenAIModel
+    fake_openai.OpenAIChatModel = OpenAIChatModel
 
     sys_modules_backup = sys.modules.copy()
     sys.modules.update(

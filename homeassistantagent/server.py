@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from pydantic_ai import Agent
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 
 PORT = 5050
 CONFIG_PATHS = (
@@ -32,8 +32,9 @@ if not api_key:
     raise RuntimeError(
         "OpenAI API key not configured. Set openai_api_key in the add-on options."
     )
+os.environ.setdefault("OPENAI_API_KEY", api_key)
 
-model = OpenAIModel(MODEL_NAME, api_key=api_key)
+model = OpenAIChatModel(MODEL_NAME)
 agent = Agent(
     model,
     system_prompt="You are a helpful Home Assistant companion.",
