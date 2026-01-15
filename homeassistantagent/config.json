@@ -1,6 +1,6 @@
 {
   "name": "HomeAssistantAgent",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "slug": "homeassistantagent",
   "description": "Home Assistant add-on that provides a PydanticAI chat UI.",
   "startup": "services",
@@ -21,10 +21,14 @@
   "ingress": true,
   "ingress_port": 5050,
   "options": {
-    "openai_api_key": ""
+    "openai_api_key": "",
+    "mcp_access_token": "",
+    "mcp_url": ""
   },
   "schema": {
-    "openai_api_key": "str"
+    "openai_api_key": "str",
+    "mcp_access_token": "str",
+    "mcp_url": "str"
   },
   "map": [
     "config:ro",
