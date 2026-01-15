@@ -18,23 +18,51 @@ def load_api_key() -> str:
     env_key = os.getenv("OPENAI_API_KEY", "").strip()
     if env_key:
         return env_key
+    options = load_options()
+    api_key = options.get("openai_api_key", "").strip()
+    if api_key:
+        return api_key
+    return ""
+
+
+def load_options() -> dict:
     for path in CONFIG_PATHS:
         if path.exists():
             with path.open("r", encoding="utf-8") as handle:
-                data = json.load(handle)
-            api_key = data.get("openai_api_key", "").strip()
-            if api_key:
-                return api_key
-    return ""
+                return json.load(handle)
+    return {}
+
+
+def load_mcp_settings() -> tuple[str, str]:
+    options = load_options()
+    token = options.get("mcp_access_token", "").strip()
+    url = options.get("mcp_url", "").strip() or "/api/mcp"
+    return token, url
 
 
 api_key = load_api_key()
 if api_key:
     os.environ.setdefault("OPENAI_API_KEY", api_key)
     model = OpenAIChatModel(MODEL_NAME)
+    mcp_token, mcp_url = load_mcp_settings()
+    toolsets = []
+    if mcp_token:
+        try:
+            from pydantic_ai.mcp import MCPServerStreamableHTTP
+
+            mcp_server = MCPServerStreamableHTTP(
+                mcp_url,
+                headers={"Authorization": f"Bearer {mcp_token}"},
+            )
+            toolsets.append(mcp_server)
+        except ImportError:
+            print("MCP tooling is unavailable because the MCP package is not installed.")
+    else:
+        print("MCP access token not configured; MCP tooling disabled.")
     agent = Agent(
         model,
         system_prompt="You are a helpful Home Assistant companion.",
+        toolsets=toolsets,
     )
     app = agent.to_web()
 else:
