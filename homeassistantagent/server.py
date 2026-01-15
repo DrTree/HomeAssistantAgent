@@ -24,8 +24,8 @@ def load_api_key() -> str:
     env_key = os.getenv("OPENAI_API_KEY", "").strip()
     if env_key:
         return env_key
-    data = load_options()
-    api_key = data.get("openai_api_key", "").strip()
+    options = load_options()
+    api_key = options.get("openai_api_key", "").strip()
     if api_key:
         return api_key
     return ""
@@ -85,9 +85,25 @@ if api_key:
         os.environ.setdefault("MCP_ACCESS_TOKEN", mcp_access_token)
         os.environ.setdefault("MCP_URL", mcp_url)
     model = OpenAIChatModel(MODEL_NAME)
+    mcp_token, mcp_url = load_mcp_settings()
+    toolsets = []
+    if mcp_token:
+        try:
+            from pydantic_ai.mcp import MCPServerStreamableHTTP
+
+            mcp_server = MCPServerStreamableHTTP(
+                mcp_url,
+                headers={"Authorization": f"Bearer {mcp_token}"},
+            )
+            toolsets.append(mcp_server)
+        except ImportError:
+            print("MCP tooling is unavailable because the MCP package is not installed.")
+    else:
+        print("MCP access token not configured; MCP tooling disabled.")
     agent = Agent(
         model,
         system_prompt="You are a helpful Home Assistant companion.",
+        toolsets=toolsets,
     )
     app = build_app(agent)
 else:
