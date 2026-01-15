@@ -23,12 +23,12 @@
   "options": {
     "openai_api_key": "",
     "mcp_access_token": "",
-    "mcp_url": ""
+    "mcp_url": "/api/chat"
   },
   "schema": {
     "openai_api_key": "str",
     "mcp_access_token": "str",
-    "mcp_url": "str?"
+    "mcp_url": "str"
   },
   "map": [
     "config:ro",
