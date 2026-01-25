@@ -1,14 +1,11 @@
 import { useState } from 'react';
-import { DefaultChatTransport } from 'ai';
 import { useChat } from '@ai-sdk/react';
 import './App.css';
 
 export default function App() {
   const [input, setInput] = useState('');
   const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-    }),
+    api: '/api/chat',
   });
 
   const isReady = status === 'ready';
