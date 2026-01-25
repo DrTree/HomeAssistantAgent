@@ -1,21 +1,28 @@
 import { useChat } from '@ai-sdk/react';
+import { useState } from 'react';
 import './App.css';
 
 export default function App() {
-  const {
-    messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
-    error,
-  } = useChat({
-    api: '/api/chat',
-  });
+  const { messages, status, error, sendMessage } = useChat();
+  const [input, setInput] = useState('');
 
-  const isBusy = isLoading;
-  const isReady = !isLoading && !error;
+  const isBusy = status === 'submitted' || status === 'streaming';
+  const isReady = status === 'ready' && !error;
   const isError = Boolean(error);
+
+  const handleInputChange = (event) => {
+    setInput(event.target.value);
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const trimmed = input.trim();
+    if (!trimmed || isBusy) {
+      return;
+    }
+    sendMessage(trimmed);
+    setInput('');
+  };
 
   return (
     <div className="app">
