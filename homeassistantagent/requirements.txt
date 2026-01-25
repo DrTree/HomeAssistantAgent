@@ -1,2 +1,3 @@
-pydantic-ai-slim[web,openai]
+pydantic-ai-slim[openai]
+fastapi
 uvicorn
