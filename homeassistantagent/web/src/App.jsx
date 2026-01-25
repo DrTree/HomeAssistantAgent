@@ -1,16 +1,21 @@
-import { useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 import './App.css';
 
 export default function App() {
-  const [input, setInput] = useState('');
-  const { messages, sendMessage, status } = useChat({
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    error,
+  } = useChat({
     api: '/api/chat',
   });
 
-  const isBusy = status === 'streaming' || status === 'submitted';
-  const isReady = status === 'ready';
-  const isError = status === 'error';
+  const isBusy = isLoading;
+  const isReady = !isLoading && !error;
+  const isError = Boolean(error);
 
   return (
     <div className="app">
@@ -45,20 +50,10 @@ export default function App() {
         )}
       </section>
 
-      <form
-        className="composer"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!input.trim() || isBusy) {
-            return;
-          }
-          sendMessage({ text: input });
-          setInput('');
-        }}
-      >
+      <form className="composer" onSubmit={handleSubmit}>
         <input
           value={input}
-          onChange={(event) => setInput(event.target.value)}
+          onChange={handleInputChange}
           placeholder="Ask about automations, sensors, or setup tips…"
           aria-label="Message"
           disabled={isBusy}
