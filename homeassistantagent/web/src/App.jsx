@@ -1,26 +1,32 @@
 import { useChat } from '@ai-sdk/react';
-import { useState } from 'react';
 import './App.css';
 
 export default function App() {
-  const { messages, status, error, sendMessage } = useChat();
-  const [input, setInput] = useState('');
+  const {
+    messages,
+    input,
+    setInput,
+    append,
+    isLoading,
+    error,
+  } = useChat();
 
-  const isBusy = status === 'submitted' || status === 'streaming';
-  const isReady = status === 'ready' && !error;
+  const isBusy = isLoading;
+  const isReady = !isLoading && !error;
   const isError = Boolean(error);
 
-  const handleInputChange = (event) => {
-    setInput(event.target.value);
-  };
-
-  const handleSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed || isBusy) {
+    if (isBusy) {
       return;
     }
-    sendMessage(trimmed);
+
+    const trimmedInput = input.trim();
+    if (!trimmedInput) {
+      return;
+    }
+
+    await append({ role: 'user', content: trimmedInput });
     setInput('');
   };
 
@@ -47,20 +53,16 @@ export default function App() {
           messages.map((message) => (
             <div key={message.id} className={`chat__message chat__message--${message.role}`}>
               <span className="chat__role">{message.role}</span>
-              <div className="chat__content">
-                {message.parts.map((part, index) =>
-                  part.type === 'text' ? <span key={index}>{part.text}</span> : null,
-                )}
-              </div>
+              <div className="chat__content">{message.content}</div>
             </div>
           ))
         )}
       </section>
 
-      <form className="composer" onSubmit={handleSubmit}>
+      <form className="composer" onSubmit={onSubmit}>
         <input
           value={input}
-          onChange={handleInputChange}
+          onChange={(event) => setInput(event.target.value)}
           placeholder="Ask about automations, sensors, or setup tips…"
           aria-label="Message"
           disabled={isBusy}
