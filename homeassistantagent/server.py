@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic_ai import Agent
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 
@@ -27,7 +27,7 @@ openai_api_key = options.get("openai_api_key") or os.environ.get("OPENAI_API_KEY
 model_name = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 
 provider = OpenAIProvider(api_key=openai_api_key)
-model = OpenAIModel(model_name, provider=provider)
+model = OpenAIChatModel(model_name, provider=provider)
 
 agent = Agent(
     model,
