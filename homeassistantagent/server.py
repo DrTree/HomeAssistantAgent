@@ -2,14 +2,10 @@ import json
 import os
 from pathlib import Path
 
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIChatModel
-from pydantic_ai.ui._web.api import create_api_app
-from starlette.applications import Starlette
-from starlette.requests import Request
-from starlette.responses import FileResponse, PlainTextResponse
-from starlette.routing import Mount, Route
-from starlette.staticfiles import StaticFiles
 
 PORT = 5050
 CONFIG_PATHS = (
@@ -17,7 +13,6 @@ CONFIG_PATHS = (
     Path("/config/options.json"),
 )
 MODEL_NAME = "gpt-4o"
-STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 def load_api_key() -> str:
@@ -51,30 +46,29 @@ def load_mcp_settings() -> tuple[str, str]:
     return token, url
 
 
-def build_app(agent: Agent | None) -> Starlette:
-    async def index(_: Request) -> FileResponse:
-        return FileResponse(STATIC_DIR / "index.html")
+class ChatRequest(BaseModel):
+    message: str
 
-    routes = [
-        Mount("/static", app=StaticFiles(directory=STATIC_DIR), name="static"),
-        Route("/", index, methods=["GET"]),
-    ]
 
-    if agent is None:
-        message = (
-            "OpenAI API key not configured. "
-            "Set openai_api_key in the add-on options and restart the add-on."
-        )
+def build_app(agent: Agent | None) -> FastAPI:
+    app = FastAPI()
 
-        async def not_configured(_: Request) -> PlainTextResponse:
-            return PlainTextResponse(message)
+    @app.get("/health")
+    async def health() -> dict[str, str]:
+        return {"status": "ok"}
 
-        routes.insert(0, Route("/api/{path:path}", not_configured, methods=["GET", "POST", "OPTIONS"]))
-    else:
-        api_app = create_api_app(agent=agent)
-        routes.insert(0, Mount("/api", app=api_app))
+    @app.post("/api/chat")
+    async def chat(request: ChatRequest) -> dict[str, str]:
+        if agent is None:
+            message = (
+                "OpenAI API key not configured. "
+                "Set openai_api_key in the add-on options and restart the add-on."
+            )
+            raise HTTPException(status_code=503, detail=message)
+        result = await agent.run(request.message)
+        return {"response": str(result.output)}
 
-    return Starlette(routes=routes)
+    return app
 
 
 api_key = load_api_key()

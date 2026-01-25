@@ -15,20 +15,12 @@ def load_server_module():
     fake_pydantic_ai = types.ModuleType("pydantic_ai")
 
     class Agent:
-        def __init__(self, model, system_prompt):
+        def __init__(self, model, system_prompt, toolsets=None):
             self.model = model
             self.system_prompt = system_prompt
+            self.toolsets = toolsets
 
     fake_pydantic_ai.Agent = Agent
-
-    fake_ui = types.ModuleType("pydantic_ai.ui")
-
-    class ChatUI:
-        def __init__(self, agent):
-            self.agent = agent
-            self.app = object()
-
-    fake_ui.ChatUI = ChatUI
 
     fake_models = types.ModuleType("pydantic_ai.models")
     fake_openai = types.ModuleType("pydantic_ai.models.openai")
@@ -43,7 +35,6 @@ def load_server_module():
     sys.modules.update(
         {
             "pydantic_ai": fake_pydantic_ai,
-            "pydantic_ai.ui": fake_ui,
             "pydantic_ai.models": fake_models,
             "pydantic_ai.models.openai": fake_openai,
         }
