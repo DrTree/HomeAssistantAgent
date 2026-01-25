@@ -37,6 +37,11 @@
   color: #0f172a;
 }
 
+.status--error {
+  background: #f97316;
+  color: #0f172a;
+}
+
 .chat {
   flex: 1;
   min-height: 380px;

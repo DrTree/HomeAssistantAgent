@@ -8,7 +8,9 @@ export default function App() {
     api: '/api/chat',
   });
 
+  const isBusy = status === 'streaming' || status === 'submitted';
   const isReady = status === 'ready';
+  const isError = status === 'error';
 
   return (
     <div className="app">
@@ -17,8 +19,10 @@ export default function App() {
           <h1>HomeAssistantAgent</h1>
           <p>Ask questions about Home Assistant and get concise guidance.</p>
         </div>
-        <span className={isReady ? 'status' : 'status status--active'}>
-          {isReady ? 'Ready' : 'Thinking…'}
+        <span
+          className={`status${isReady ? '' : ' status--active'}${isError ? ' status--error' : ''}`}
+        >
+          {isReady ? 'Ready' : isError ? 'Offline' : 'Thinking…'}
         </span>
       </header>
 
@@ -45,7 +49,7 @@ export default function App() {
         className="composer"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!input.trim() || !isReady) {
+          if (!input.trim() || isBusy) {
             return;
           }
           sendMessage({ text: input });
@@ -57,9 +61,9 @@ export default function App() {
           onChange={(event) => setInput(event.target.value)}
           placeholder="Ask about automations, sensors, or setup tips…"
           aria-label="Message"
-          disabled={!isReady}
+          disabled={isBusy}
         />
-        <button type="submit" disabled={!input.trim() || !isReady}>
+        <button type="submit" disabled={!input.trim() || isBusy}>
           Send
         </button>
       </form>
