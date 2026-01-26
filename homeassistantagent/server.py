@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from typing import Literal
 
-from pydantic_ai import Agent, Tool
+from pydantic_ai import Agent, DeferredToolRequests, Tool
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
@@ -50,6 +50,7 @@ agent = Agent(
         "You are HomeAssistantAgent, a helpful assistant for Home Assistant users. "
         "Answer clearly and keep responses concise unless asked to elaborate."
     ),
+    output_type=[str, DeferredToolRequests],
     tools=[Tool(calculator, requires_approval=True)],
 )
 
