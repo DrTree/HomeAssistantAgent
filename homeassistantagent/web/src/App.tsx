@@ -1,14 +1,23 @@
 import { useChat } from '@ai-sdk/react';
-import type { FormEvent } from 'react';
+import { DefaultChatTransport, type UIMessage, isTextUIPart } from 'ai';
+import { useMemo, useState, type FormEvent } from 'react';
 import './App.css';
 
 export default function App() {
-  const { messages, input, setInput, append, isLoading, error } = useChat({
-    api: '/api/chat',
-  });
-  const isBusy = isLoading;
-  const isReady = !isLoading && !error;
-  const isError = Boolean(error);
+  const [input, setInput] = useState('');
+  const transport = useMemo(() => new DefaultChatTransport({ api: '/api/chat' }), []);
+  const { messages, sendMessage, status, error } = useChat({ transport });
+  const isBusy = status === 'submitted' || status === 'streaming';
+  const isReady = status === 'ready';
+  const isError = status === 'error' || Boolean(error);
+
+  const renderMessageContent = (message: UIMessage) => {
+    const textParts = message.parts.filter(isTextUIPart).map((part) => part.text);
+    if (textParts.length > 0) {
+      return textParts.join('');
+    }
+    return message.parts.length > 0 ? '[Unsupported message content]' : '';
+  };
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -21,7 +30,7 @@ export default function App() {
       return;
     }
 
-    await append({ role: 'user', content: trimmedInput });
+    await sendMessage({ text: trimmedInput });
     setInput('');
   };
 
@@ -46,11 +55,11 @@ export default function App() {
           </div>
         ) : (
           messages.map((message) => (
-            <div key={message.id} className={`chat__message chat__message--${message.role}`}>
-              <span className="chat__role">{message.role}</span>
-              <div className="chat__content">{message.content}</div>
-            </div>
-          ))
+              <div key={message.id} className={`chat__message chat__message--${message.role}`}>
+                <span className="chat__role">{message.role}</span>
+                <div className="chat__content">{renderMessageContent(message)}</div>
+              </div>
+            ))
         )}
       </section>
 
