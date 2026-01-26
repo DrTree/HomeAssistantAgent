@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -12,9 +13,12 @@ from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 
+APP_ROOT = Path(__file__).resolve().parent
+if str(APP_ROOT) not in sys.path:
+    sys.path.insert(0, str(APP_ROOT))
+
 from homeassistant_api import HomeAssistantApiClient
 
-APP_ROOT = Path(__file__).resolve().parent
 WEB_DIST = APP_ROOT / "web" / "dist"
 OPTIONS_PATH = Path("/data/options.json")
 
