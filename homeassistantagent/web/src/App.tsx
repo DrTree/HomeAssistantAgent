@@ -1,13 +1,20 @@
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport, type UIMessage, isTextUIPart, isToolUIPart } from 'ai';
+import {
+  DefaultChatTransport,
+  type UIMessage,
+  isTextUIPart,
+  isToolUIPart,
+  lastAssistantMessageIsCompleteWithToolCalls,
+} from 'ai';
 import { useMemo, useState, type FormEvent } from 'react';
 import './App.css';
 
 export default function App() {
   const [input, setInput] = useState('');
   const transport = useMemo(() => new DefaultChatTransport({ api: '/api/chat' }), []);
-  const { messages, sendMessage, status, error, addToolApprovalResponse } = useChat({
+  const { messages, sendMessage, status, error, addToolOutput } = useChat({
     transport,
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   });
   const isBusy = status === 'submitted' || status === 'streaming';
   const isReady = status === 'ready';
@@ -27,25 +34,69 @@ export default function App() {
       );
     }
 
-    const input = part.input as { number_a?: number; number_b?: number; operator?: string };
+    const parsedInput = (() => {
+      if (typeof part.input === 'string') {
+        try {
+          return JSON.parse(part.input) as { number_a?: number; number_b?: number; operator?: string };
+        } catch (error) {
+          console.warn('Unable to parse tool input.', error);
+          return {};
+        }
+      }
+      return (part.input ?? {}) as { number_a?: number; number_b?: number; operator?: string };
+    })();
 
-    if (part.state === 'approval-requested') {
+    if (part.state === 'approval-requested' || part.state === 'input-available') {
       return (
         <div key={part.toolCallId} className="chat__tool">
           <p className="chat__tool-title">Calculator approval requested</p>
           <p className="chat__tool-details">
-            {input.number_a} {input.operator} {input.number_b}
+            {parsedInput.number_a} {parsedInput.operator} {parsedInput.number_b}
           </p>
           <div className="chat__tool-actions">
             <button
               type="button"
               className="chat__tool-button"
-              onClick={() =>
-                addToolApprovalResponse({
-                  id: part.approval.id,
-                  approved: true,
-                })
-              }
+              onClick={() => {
+                if (
+                  typeof parsedInput.number_a !== 'number' ||
+                  typeof parsedInput.number_b !== 'number' ||
+                  !parsedInput.operator
+                ) {
+                  addToolOutput({
+                    tool: 'calculator',
+                    toolCallId: part.toolCallId,
+                    state: 'output-error',
+                    errorText: 'Missing calculator inputs.',
+                  });
+                  return;
+                }
+
+                if (parsedInput.operator === '/' && parsedInput.number_b === 0) {
+                  addToolOutput({
+                    tool: 'calculator',
+                    toolCallId: part.toolCallId,
+                    state: 'output-error',
+                    errorText: 'Cannot divide by zero.',
+                  });
+                  return;
+                }
+
+                const result =
+                  parsedInput.operator === '+'
+                    ? parsedInput.number_a + parsedInput.number_b
+                    : parsedInput.operator === '-'
+                      ? parsedInput.number_a - parsedInput.number_b
+                      : parsedInput.operator === '*'
+                        ? parsedInput.number_a * parsedInput.number_b
+                        : parsedInput.number_a / parsedInput.number_b;
+
+                addToolOutput({
+                  tool: 'calculator',
+                  toolCallId: part.toolCallId,
+                  output: result,
+                });
+              }}
             >
               Approve
             </button>
@@ -53,9 +104,11 @@ export default function App() {
               type="button"
               className="chat__tool-button chat__tool-button--deny"
               onClick={() =>
-                addToolApprovalResponse({
-                  id: part.approval.id,
-                  approved: false,
+                addToolOutput({
+                  tool: 'calculator',
+                  toolCallId: part.toolCallId,
+                  state: 'output-error',
+                  errorText: 'Calculator request denied by user.',
                 })
               }
             >
@@ -66,12 +119,15 @@ export default function App() {
       );
     }
 
-    if (part.state === 'approval-responded' && part.approval.approved === false) {
+    if (
+      (part.state === 'approval-responded' && part.approval.approved === false) ||
+      part.state === 'output-denied'
+    ) {
       return (
         <div key={part.toolCallId} className="chat__tool">
           <p className="chat__tool-title">Calculator request denied</p>
           <p className="chat__tool-details">
-            {input.number_a} {input.operator} {input.number_b}
+            {parsedInput.number_a} {parsedInput.operator} {parsedInput.number_b}
           </p>
         </div>
       );
@@ -82,8 +138,32 @@ export default function App() {
         <div key={part.toolCallId} className="chat__tool">
           <p className="chat__tool-title">Calculator result</p>
           <p className="chat__tool-details">
-            {input.number_a} {input.operator} {input.number_b} = {part.output as number}
+            {parsedInput.number_a} {parsedInput.operator} {parsedInput.number_b} = {part.output as number}
           </p>
+        </div>
+      );
+    }
+
+    if (part.state === 'output-error') {
+      const errorText = part.errorText ?? 'Unable to process calculator request.';
+      const isDenied = errorText.toLowerCase().includes('denied');
+      return (
+        <div key={part.toolCallId} className="chat__tool">
+          <p className="chat__tool-title">
+            {isDenied ? 'Calculator request denied' : 'Calculator error'}
+          </p>
+          <p className="chat__tool-details">
+            {parsedInput.number_a} {parsedInput.operator} {parsedInput.number_b}
+          </p>
+          <p className="chat__tool-details">{errorText}</p>
+        </div>
+      );
+    }
+
+    if (part.state === 'input-streaming') {
+      return (
+        <div key={part.toolCallId} className="chat__tool">
+          <p className="chat__tool-title">Calculator request incoming…</p>
         </div>
       );
     }
