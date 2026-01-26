@@ -1,21 +1,16 @@
 import { useChat } from '@ai-sdk/react';
+import type { FormEvent } from 'react';
 import './App.css';
 
 export default function App() {
-  const {
-    messages,
-    input,
-    setInput,
-    append,
-    isLoading,
-    error,
-  } = useChat();
-
+  const { messages, input, setInput, append, isLoading, error } = useChat({
+    api: '/api/chat',
+  });
   const isBusy = isLoading;
   const isReady = !isLoading && !error;
   const isError = Boolean(error);
 
-  const onSubmit = async (event) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isBusy) {
       return;

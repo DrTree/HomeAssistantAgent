@@ -3,7 +3,8 @@ FROM node:20-alpine AS web-build
 WORKDIR /app/web
 
 COPY web/package.json /app/web/package.json
-RUN npm install
+COPY web/package-lock.json /app/web/package-lock.json
+RUN npm ci
 
 COPY web /app/web
 RUN npm run build
