@@ -12,6 +12,8 @@ from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 
+from homeassistant_api import HomeAssistantApiClient
+
 APP_ROOT = Path(__file__).resolve().parent
 WEB_DIST = APP_ROOT / "web" / "dist"
 OPTIONS_PATH = Path("/data/options.json")
@@ -30,6 +32,7 @@ model_name = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 
 provider = OpenAIProvider(api_key=openai_api_key)
 model = OpenAIChatModel(model_name, provider=provider)
+home_assistant_client = HomeAssistantApiClient()
 
 def calculator(number_a: float, number_b: float, operator: Literal["+", "-", "*", "/"]) -> float:
     """Perform a basic arithmetic operation on two numbers."""
@@ -44,6 +47,11 @@ def calculator(number_a: float, number_b: float, operator: Literal["+", "-", "*"
     return number_a / number_b
 
 
+def render_home_assistant_template(template: str, variables: dict | None = None) -> str:
+    """Render a Home Assistant Jinja2 template using the built-in template API."""
+    return home_assistant_client.render_template(template, variables)
+
+
 agent = Agent(
     model,
     system_prompt=(
@@ -51,7 +59,10 @@ agent = Agent(
         "Answer clearly and keep responses concise unless asked to elaborate."
     ),
     output_type=[str, DeferredToolRequests],
-    tools=[Tool(calculator, requires_approval=True)],
+    tools=[
+        Tool(calculator, requires_approval=True),
+        Tool(render_home_assistant_template, requires_approval=False),
+    ],
 )
 
 app = FastAPI()
