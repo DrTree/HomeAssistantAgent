@@ -1,6 +1,6 @@
 {
   "name": "HomeAssistantAgent",
-  "version": "0.1.34",
+  "version": "0.1.35",
   "slug": "homeassistantagent",
   "description": "Home Assistant add-on that provides a PydanticAI chat service.",
   "startup": "services",

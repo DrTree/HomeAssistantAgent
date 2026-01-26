@@ -60,6 +60,38 @@
   margin: auto;
 }
 
+.chat__error {
+  border: 1px solid #f97316;
+  background: rgba(251, 146, 60, 0.12);
+  color: #fed7aa;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.chat__error-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.chat__error-details {
+  margin: 0;
+  color: #fdba74;
+}
+
+.chat__error-dismiss {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  background: #f97316;
+  color: #0f172a;
+  cursor: pointer;
+}
+
 .chat__message {
   display: flex;
   flex-direction: column;

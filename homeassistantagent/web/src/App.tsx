@@ -6,11 +6,12 @@ import {
   isToolUIPart,
   lastAssistantMessageIsCompleteWithToolCalls,
 } from 'ai';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import './App.css';
 
 export default function App() {
   const [input, setInput] = useState('');
+  const [uiError, setUiError] = useState<string | null>(null);
   const transport = useMemo(() => new DefaultChatTransport({ api: '/api/chat' }), []);
   const { messages, sendMessage, status, error, addToolOutput } = useChat({
     transport,
@@ -19,6 +20,17 @@ export default function App() {
   const isBusy = status === 'submitted' || status === 'streaming';
   const isReady = status === 'ready';
   const isError = status === 'error' || Boolean(error);
+  const errorMessage =
+    uiError ??
+    (isError
+      ? 'The chat service is unavailable right now. Check the server logs for details.'
+      : null);
+
+  useEffect(() => {
+    if (error) {
+      setUiError(error instanceof Error ? error.message : 'Unexpected chat error.');
+    }
+  }, [error]);
 
   const renderToolPart = (part: UIMessage['parts'][number]) => {
     if (!isToolUIPart(part)) {
@@ -210,8 +222,16 @@ export default function App() {
       return;
     }
 
-    await sendMessage({ text: trimmedInput });
-    setInput('');
+    try {
+      await sendMessage({ text: trimmedInput });
+      setInput('');
+    } catch (sendError) {
+      setUiError(
+        sendError instanceof Error
+          ? sendError.message
+          : 'Unable to send your message. Please try again.',
+      );
+    }
   };
 
   return (
@@ -229,6 +249,17 @@ export default function App() {
       </header>
 
       <section className="chat">
+        {errorMessage ? (
+          <div className="chat__error">
+            <div>
+              <p className="chat__error-title">We hit a problem</p>
+              <p className="chat__error-details">{errorMessage}</p>
+            </div>
+            <button type="button" className="chat__error-dismiss" onClick={() => setUiError(null)}>
+              Dismiss
+            </button>
+          </div>
+        ) : null}
         {messages.length === 0 ? (
           <div className="chat__empty">
             <p>Start a conversation by asking your first question.</p>
