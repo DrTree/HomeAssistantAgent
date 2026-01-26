@@ -111,11 +111,7 @@ export default function App() {
       if (isToolUIPart(part)) {
         return renderToolPart(part);
       }
-      return (
-        <p key={`${message.id}-unsupported-${index}`} className="chat__unsupported">
-          [Unsupported message content]
-        </p>
-      );
+      return null;
     });
   };
 
