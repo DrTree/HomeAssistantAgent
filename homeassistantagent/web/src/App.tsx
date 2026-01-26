@@ -29,7 +29,7 @@ export default function App() {
       return (
         <div key={part.toolCallId} className="chat__tool">
           <p className="chat__tool-title">Tool request</p>
-          <p>Unsupported tool request.</p>
+          <pre className="chat__tool-details">{JSON.stringify(part, null, 2)}</pre>
         </div>
       );
     }
@@ -191,7 +191,11 @@ export default function App() {
       if (isToolUIPart(part)) {
         return renderToolPart(part);
       }
-      return null;
+      return (
+        <pre key={`${message.id}-unsupported-${index}`} className="chat__text">
+          {JSON.stringify(part, null, 2)}
+        </pre>
+      );
     });
   };
 
