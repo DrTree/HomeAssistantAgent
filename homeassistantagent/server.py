@@ -61,7 +61,7 @@ agent = Agent(
     output_type=[str, DeferredToolRequests],
     tools=[
         Tool(calculator, requires_approval=True),
-        Tool(render_home_assistant_template, requires_approval=True),
+        Tool(render_home_assistant_template, requires_approval=False),
     ],
 )
 
