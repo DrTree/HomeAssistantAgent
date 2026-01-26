@@ -1,22 +1,122 @@
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport, type UIMessage, isTextUIPart } from 'ai';
+import { DefaultChatTransport, type UIMessage, isTextUIPart, isToolUIPart } from 'ai';
 import { useMemo, useState, type FormEvent } from 'react';
 import './App.css';
 
 export default function App() {
   const [input, setInput] = useState('');
   const transport = useMemo(() => new DefaultChatTransport({ api: '/api/chat' }), []);
-  const { messages, sendMessage, status, error } = useChat({ transport });
+  const { messages, sendMessage, status, error, addToolApprovalResponse } = useChat({
+    transport,
+  });
   const isBusy = status === 'submitted' || status === 'streaming';
   const isReady = status === 'ready';
   const isError = status === 'error' || Boolean(error);
 
-  const renderMessageContent = (message: UIMessage) => {
-    const textParts = message.parts.filter(isTextUIPart).map((part) => part.text);
-    if (textParts.length > 0) {
-      return textParts.join('');
+  const renderToolPart = (part: UIMessage['parts'][number]) => {
+    if (!isToolUIPart(part)) {
+      return null;
     }
-    return message.parts.length > 0 ? '[Unsupported message content]' : '';
+
+    if (part.type !== 'tool-calculator') {
+      return (
+        <div key={part.toolCallId} className="chat__tool">
+          <p className="chat__tool-title">Tool request</p>
+          <p>Unsupported tool request.</p>
+        </div>
+      );
+    }
+
+    const input = part.input as { number_a?: number; number_b?: number; operator?: string };
+
+    if (part.state === 'approval-requested') {
+      return (
+        <div key={part.toolCallId} className="chat__tool">
+          <p className="chat__tool-title">Calculator approval requested</p>
+          <p className="chat__tool-details">
+            {input.number_a} {input.operator} {input.number_b}
+          </p>
+          <div className="chat__tool-actions">
+            <button
+              type="button"
+              className="chat__tool-button"
+              onClick={() =>
+                addToolApprovalResponse({
+                  id: part.approval.id,
+                  approved: true,
+                })
+              }
+            >
+              Approve
+            </button>
+            <button
+              type="button"
+              className="chat__tool-button chat__tool-button--deny"
+              onClick={() =>
+                addToolApprovalResponse({
+                  id: part.approval.id,
+                  approved: false,
+                })
+              }
+            >
+              Deny
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (part.state === 'approval-responded' && part.approval.approved === false) {
+      return (
+        <div key={part.toolCallId} className="chat__tool">
+          <p className="chat__tool-title">Calculator request denied</p>
+          <p className="chat__tool-details">
+            {input.number_a} {input.operator} {input.number_b}
+          </p>
+        </div>
+      );
+    }
+
+    if (part.state === 'output-available') {
+      return (
+        <div key={part.toolCallId} className="chat__tool">
+          <p className="chat__tool-title">Calculator result</p>
+          <p className="chat__tool-details">
+            {input.number_a} {input.operator} {input.number_b} = {part.output as number}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div key={part.toolCallId} className="chat__tool">
+        <p className="chat__tool-title">Calculator pending</p>
+      </div>
+    );
+  };
+
+  const renderMessageContent = (message: UIMessage) => {
+    if (message.parts.length === 0) {
+      return '';
+    }
+
+    return message.parts.map((part, index) => {
+      if (isTextUIPart(part)) {
+        return (
+          <p key={`${message.id}-text-${index}`} className="chat__text">
+            {part.text}
+          </p>
+        );
+      }
+      if (isToolUIPart(part)) {
+        return renderToolPart(part);
+      }
+      return (
+        <p key={`${message.id}-unsupported-${index}`} className="chat__unsupported">
+          [Unsupported message content]
+        </p>
+      );
+    });
   };
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {

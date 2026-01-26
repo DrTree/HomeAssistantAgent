@@ -5,7 +5,9 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic_ai import Agent
+from typing import Literal
+
+from pydantic_ai import Agent, Tool
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
@@ -29,12 +31,26 @@ model_name = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 provider = OpenAIProvider(api_key=openai_api_key)
 model = OpenAIChatModel(model_name, provider=provider)
 
+def calculator(number_a: float, number_b: float, operator: Literal["+", "-", "*", "/"]) -> float:
+    """Perform a basic arithmetic operation on two numbers."""
+    if operator == "+":
+        return number_a + number_b
+    if operator == "-":
+        return number_a - number_b
+    if operator == "*":
+        return number_a * number_b
+    if number_b == 0:
+        raise ValueError("Cannot divide by zero.")
+    return number_a / number_b
+
+
 agent = Agent(
     model,
     system_prompt=(
         "You are HomeAssistantAgent, a helpful assistant for Home Assistant users. "
         "Answer clearly and keep responses concise unless asked to elaborate."
     ),
+    tools=[Tool(calculator, requires_approval=True)],
 )
 
 app = FastAPI()
