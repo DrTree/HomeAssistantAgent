@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import sys
 from pathlib import Path
@@ -37,6 +38,8 @@ model_name = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 provider = OpenAIProvider(api_key=openai_api_key)
 model = OpenAIChatModel(model_name, provider=provider)
 home_assistant_client = HomeAssistantApiClient()
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 def calculator(number_a: float, number_b: float, operator: Literal["+", "-", "*", "/"]) -> float:
     """Perform a basic arithmetic operation on two numbers."""
@@ -53,7 +56,13 @@ def calculator(number_a: float, number_b: float, operator: Literal["+", "-", "*"
 
 def render_home_assistant_template(template: str, variables: dict | None = None) -> str:
     """Render a Home Assistant Jinja2 template using the built-in template API."""
-    return home_assistant_client.render_template(template, variables)
+    try:
+        return home_assistant_client.render_template(template, variables)
+    except Exception:
+        logger.exception(
+            "Template render failed for template=%s variables=%s", template, variables
+        )
+        raise
 
 
 agent = Agent(
