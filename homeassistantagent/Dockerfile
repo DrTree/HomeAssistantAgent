@@ -17,6 +17,7 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY server.py /app/server.py
+COPY homeassistant_api.py /app/homeassistant_api.py
 COPY run.sh /app/run.sh
 COPY --from=web-build /app/web/dist /app/web/dist
 
