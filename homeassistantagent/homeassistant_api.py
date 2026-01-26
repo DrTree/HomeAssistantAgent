@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from dataclasses import dataclass
 from typing import Any
@@ -7,6 +8,7 @@ from urllib.error import HTTPError, URLError
 
 DEFAULT_BASE_URL = os.environ.get("HOME_ASSISTANT_URL", "http://supervisor/core")
 DEFAULT_TOKEN = os.environ.get("SUPERVISOR_TOKEN") or os.environ.get("HOME_ASSISTANT_TOKEN")
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -20,6 +22,12 @@ class HomeAssistantApiClient:
             raise RuntimeError("Home Assistant API token is not configured.")
 
         url = f"{self.base_url.rstrip('/')}{path}"
+        token_prefix = self.token[:4]
+        logger.info(
+            "Home Assistant API request url=%s token_prefix=%s",
+            url,
+            token_prefix,
+        )
         data = json.dumps(payload or {}).encode("utf-8")
         headers = {
             "Authorization": f"Bearer {self.token}",
