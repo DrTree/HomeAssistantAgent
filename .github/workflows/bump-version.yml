@@ -48,3 +48,47 @@ jobs:
           git add homeassistantagent/config.json
           git commit -m "chore: bump add-on version"
           git push origin HEAD:main
+
+  notify_ha:
+    name: Notify Home Assistant
+    runs-on: ubuntu-latest
+    needs: bump-version
+    if: always()
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Read bumped version
+        id: bumped_version
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+
+          config_path = Path('homeassistantagent/config.json')
+          data = json.loads(config_path.read_text())
+          print(f"version={data.get('version', '')}")
+          PY
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Call HA webhook
+        run: |
+          curl -sS -X POST \
+            -H "Content-Type: application/json" \
+            -d '{
+              "repo": "'"${GITHUB_REPOSITORY}"'",
+              "workflow": "'"${GITHUB_WORKFLOW}"'",
+              "run_id": "'"${GITHUB_RUN_ID}"'",
+              "run_number": "'"${GITHUB_RUN_NUMBER}"'",
+              "sha": "'"${GITHUB_SHA}"'",
+              "ref": "'"${GITHUB_REF}"'",
+              "bump_job_result": "'"${{ needs['bump-version'].result }}"'",
+              "bumped_version": "'"${{ steps.bumped_version.outputs.version }}"'"
+            }' \
+            "${{ secrets.HA_WEBHOOK_URL }}"
