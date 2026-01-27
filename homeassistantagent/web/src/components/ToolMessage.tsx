@@ -1,13 +1,21 @@
 import { type UIMessage, isToolUIPart } from 'ai';
 import { parseCalculatorInput } from './toolUtils';
 
-type ToolOutputPayload = {
-  tool: string;
-  toolCallId: string;
-  output?: unknown;
-  state?: string;
-  errorText?: string;
-};
+export type ToolOutputPayload =
+  | {
+      tool: string;
+      toolCallId: string;
+      output: unknown;
+      state?: 'output-available';
+      errorText?: never;
+    }
+  | {
+      tool: string;
+      toolCallId: string;
+      output?: never;
+      state: 'output-error';
+      errorText: string;
+    };
 
 type ToolMessageProps = {
   part: UIMessage['parts'][number];
