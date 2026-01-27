@@ -1,0 +1,50 @@
+name: Bump add-on version
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump add-on version
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          config_path = Path('homeassistantagent/config.json')
+          data = json.loads(config_path.read_text())
+          version = data.get('version', '0.0.0')
+          parts = version.split('.')
+          while len(parts) < 3:
+            parts.append('0')
+          major, minor, patch = (int(parts[0]), int(parts[1]), int(parts[2]))
+          patch += 1
+          data['version'] = f"{major}.{minor}.{patch}"
+          config_path.write_text(json.dumps(data, indent=2) + "\n")
+          print(f"Bumped version to {data['version']}")
+          PY
+
+      - name: Commit version bump
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add homeassistantagent/config.json
+          git commit -m "chore: bump add-on version"
+          git push origin HEAD:main
