@@ -23,6 +23,6 @@ class ChatAgent:
             tools=[
                 Tool(calculator, requires_approval=True),
                 Tool(call_home_assistant_service, requires_approval=True),
-                Tool(render_home_assistant_template, requires_approval=True),
+                Tool(render_home_assistant_template, requires_approval=False),
             ],
         )
