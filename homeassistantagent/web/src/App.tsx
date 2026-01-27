@@ -9,8 +9,10 @@ import {
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import './App.css';
 import { AppHeader } from './components/AppHeader';
+import { ChatErrorBanner } from './components/ChatErrorBanner';
 import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/Composer';
+import { EmptyState } from './components/EmptyState';
 import { ModelSelector } from './components/ModelSelector';
 import { ToolMessage } from './components/ToolMessage';
 
@@ -29,6 +31,7 @@ export default function App() {
   const [input, setInput] = useState('');
   const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
   const [uiError, setUiError] = useState<string | null>(null);
+  const [isErrorDismissed, setIsErrorDismissed] = useState(false);
   const transport = useMemo(() => new DefaultChatTransport({ api: '/api/chat' }), []);
   const { messages, sendMessage, status, error, addToolOutput } = useChat({
     transport,
@@ -37,14 +40,16 @@ export default function App() {
   const isBusy = status === 'submitted' || status === 'streaming';
   const isReady = status === 'ready';
   const isError = status === 'error' || Boolean(error);
-  const errorMessage =
-    uiError ??
-    (isError
-      ? 'The chat service is unavailable right now. Check the server logs for details.'
-      : null);
+  const errorMessage = isErrorDismissed
+    ? null
+    : uiError ??
+      (isError
+        ? 'The chat service is unavailable right now. Check the server logs for details.'
+        : null);
 
   useEffect(() => {
     if (error) {
+      setIsErrorDismissed(false);
       setUiError(error instanceof Error ? error.message : 'Unexpected chat error.');
     }
   }, [error]);
@@ -101,6 +106,7 @@ export default function App() {
       );
       setInput('');
     } catch (sendError) {
+      setIsErrorDismissed(false);
       setUiError(
         sendError instanceof Error
           ? sendError.message
@@ -129,16 +135,24 @@ export default function App() {
 
       <section className="chat">
         {errorMessage ? (
-          <div className="chat__error">
-            <div>
-              <p className="chat__error-title">We hit a problem</p>
-              <p className="chat__error-details">{errorMessage}</p>
-            </div>
-            <button type="button" className="chat__error-dismiss" onClick={() => setUiError(null)}>
-              Dismiss
-            </button>
-          </div>
+          <ChatErrorBanner
+            message={errorMessage}
+            onDismiss={() => {
+              setIsErrorDismissed(true);
+              setUiError(null);
+            }}
+          />
         ) : null}
+        {messages.length === 0 ? (
+          <EmptyState />
+        ) : (
+          messages.map((message) => (
+            <div key={message.id} className={`chat__message chat__message--${message.role}`}>
+              <span className="chat__role">{message.role}</span>
+              <div className="chat__content">{renderMessageContent(message)}</div>
+            </div>
+          ))
+        )}
         <ChatMessageList messages={messages} renderMessageContent={renderMessageContent} />
       </section>
 
