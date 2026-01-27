@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import './App.css';
 import { AppHeader } from './components/AppHeader';
 import { ChatErrorBanner } from './components/ChatErrorBanner';
+import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/Composer';
 import { EmptyState } from './components/EmptyState';
 import { ModelSelector } from './components/ModelSelector';
@@ -152,6 +153,7 @@ export default function App() {
             </div>
           ))
         )}
+        <ChatMessageList messages={messages} renderMessageContent={renderMessageContent} />
       </section>
 
       <Composer value={input} onChange={setInput} onSubmit={onSubmit} isBusy={isBusy} />
