@@ -40,9 +40,7 @@ export default function App() {
   const isBusy = status === 'submitted' || status === 'streaming';
   const isReady = status === 'ready';
   const isError = status === 'error' || Boolean(error);
-  const handleAddToolOutput = (payload: ToolOutputPayload) => {
-    addToolOutput?.(payload);
-  };
+
   const errorMessage = isErrorDismissed
     ? null
     : uiError ??
@@ -75,7 +73,7 @@ export default function App() {
           <ToolMessage
             key={`${message.id}-tool-${index}`}
             part={part}
-            addToolOutput={handleAddToolOutput}
+            addToolOutput={addToolOutput}
           />
         );
       }

@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 
+import dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -11,6 +12,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
+
+dotenv.load_dotenv()
 
 APP_ROOT = Path(__file__).resolve().parent
 if str(APP_ROOT) not in sys.path:
