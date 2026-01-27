@@ -8,6 +8,9 @@ import {
 } from 'ai';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import './App.css';
+import { AppHeader } from './components/AppHeader';
+import { Composer } from './components/Composer';
+import { ModelSelector } from './components/ModelSelector';
 
 export default function App() {
   const modelOptions = [
@@ -253,37 +256,23 @@ export default function App() {
     }
   };
 
+  const statusText = isReady ? 'Ready' : isError ? 'Offline' : 'Thinking…';
+  const statusClassName = `${isReady ? '' : 'status--active'}${isError ? ' status--error' : ''}`.trim();
+
   return (
     <div className="app">
-      <header className="app__header">
-        <div>
-          <h1>HomeAssistantAgent</h1>
-          <p>Ask questions about Home Assistant and get concise guidance.</p>
-        </div>
-        <span
-          className={`status${isReady ? '' : ' status--active'}${isError ? ' status--error' : ''}`}
-        >
-          {isReady ? 'Ready' : isError ? 'Offline' : 'Thinking…'}
-        </span>
-      </header>
+      <AppHeader
+        title="HomeAssistantAgent"
+        subtitle="Ask questions about Home Assistant and get concise guidance."
+        statusText={statusText}
+        statusClassName={statusClassName}
+      />
 
-      <section className="controls">
-        <label className="controls__label" htmlFor="model-select">
-          Model
-        </label>
-        <select
-          id="model-select"
-          className="controls__select"
-          value={selectedModel}
-          onChange={(event) => setSelectedModel(event.target.value)}
-        >
-          {modelOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </section>
+      <ModelSelector
+        modelOptions={modelOptions}
+        selectedModel={selectedModel}
+        onChange={setSelectedModel}
+      />
 
       <section className="chat">
         {errorMessage ? (
@@ -303,26 +292,15 @@ export default function App() {
           </div>
         ) : (
           messages.map((message) => (
-              <div key={message.id} className={`chat__message chat__message--${message.role}`}>
-                <span className="chat__role">{message.role}</span>
-                <div className="chat__content">{renderMessageContent(message)}</div>
-              </div>
-            ))
+            <div key={message.id} className={`chat__message chat__message--${message.role}`}>
+              <span className="chat__role">{message.role}</span>
+              <div className="chat__content">{renderMessageContent(message)}</div>
+            </div>
+          ))
         )}
       </section>
 
-      <form className="composer" onSubmit={onSubmit}>
-        <input
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          placeholder="Ask about automations, sensors, or setup tips…"
-          aria-label="Message"
-          disabled={isBusy}
-        />
-        <button type="submit" disabled={!input.trim() || isBusy}>
-          Send
-        </button>
-      </form>
+      <Composer value={input} onChange={setInput} onSubmit={onSubmit} isBusy={isBusy} />
     </div>
   );
 }
