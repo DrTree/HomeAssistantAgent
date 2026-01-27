@@ -168,7 +168,12 @@ export const ToolMessage = ({ part, addToolOutput }: ToolMessageProps) => {
   }
 
   if (part.state === 'output-available') {
-    return <ToolCard title={`${toolName} result`}>{renderToolOutput(part, renderer)}</ToolCard>;
+    return (
+      <ToolCard title={`${toolName} result`}>
+        {renderToolSummary(part, renderer)}
+        {renderToolOutput(part, renderer)}
+      </ToolCard>
+    );
   }
 
   if (part.state === 'output-error') {
