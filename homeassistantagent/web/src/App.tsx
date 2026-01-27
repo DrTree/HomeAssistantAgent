@@ -5,11 +5,29 @@ import './App.css';
 
 export default function App() {
   const [input, setInput] = useState('');
+  const [clientError, setClientError] = useState<string | null>(null);
   const transport = useMemo(() => new DefaultChatTransport({ api: '/api/chat' }), []);
   const { messages, sendMessage, status, error } = useChat({ transport });
   const isBusy = status === 'submitted' || status === 'streaming';
   const isReady = status === 'ready';
-  const isError = status === 'error' || Boolean(error);
+  const formatError = (value: unknown) => {
+    if (!value) {
+      return null;
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+    if (value instanceof Error) {
+      return value.message;
+    }
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return 'Unexpected error.';
+    }
+  };
+  const errorMessage = clientError ?? formatError(error);
+  const isError = status === 'error' || Boolean(errorMessage);
 
   const renderMessageContent = (message: UIMessage) => {
     const textParts = message.parts.filter(isTextUIPart).map((part) => part.text);
@@ -30,8 +48,13 @@ export default function App() {
       return;
     }
 
-    await sendMessage({ text: trimmedInput });
-    setInput('');
+    setClientError(null);
+    try {
+      await sendMessage({ text: trimmedInput });
+      setInput('');
+    } catch (err) {
+      setClientError(formatError(err) ?? 'Failed to send message.');
+    }
   };
 
   return (
@@ -47,6 +70,12 @@ export default function App() {
           {isReady ? 'Ready' : isError ? 'Offline' : 'Thinking…'}
         </span>
       </header>
+
+      {errorMessage ? (
+        <div className="alert" role="alert">
+          <strong>Connection error.</strong> {errorMessage}
+        </div>
+      ) : null}
 
       <section className="chat">
         {messages.length === 0 ? (
