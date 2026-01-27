@@ -9,7 +9,9 @@ import {
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import './App.css';
 import { AppHeader } from './components/AppHeader';
+import { ChatErrorBanner } from './components/ChatErrorBanner';
 import { Composer } from './components/Composer';
+import { EmptyState } from './components/EmptyState';
 import { ModelSelector } from './components/ModelSelector';
 import { ToolMessage } from './components/ToolMessage';
 
@@ -128,20 +130,10 @@ export default function App() {
 
       <section className="chat">
         {errorMessage ? (
-          <div className="chat__error">
-            <div>
-              <p className="chat__error-title">We hit a problem</p>
-              <p className="chat__error-details">{errorMessage}</p>
-            </div>
-            <button type="button" className="chat__error-dismiss" onClick={() => setUiError(null)}>
-              Dismiss
-            </button>
-          </div>
+          <ChatErrorBanner message={errorMessage} onDismiss={() => setUiError(null)} />
         ) : null}
         {messages.length === 0 ? (
-          <div className="chat__empty">
-            <p>Start a conversation by asking your first question.</p>
-          </div>
+          <EmptyState />
         ) : (
           messages.map((message) => (
             <div key={message.id} className={`chat__message chat__message--${message.role}`}>
