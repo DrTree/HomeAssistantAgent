@@ -30,6 +30,7 @@ export default function App() {
   const [input, setInput] = useState('');
   const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
   const [uiError, setUiError] = useState<string | null>(null);
+  const [isErrorDismissed, setIsErrorDismissed] = useState(false);
   const transport = useMemo(() => new DefaultChatTransport({ api: '/api/chat' }), []);
   const { messages, sendMessage, status, error, addToolOutput } = useChat({
     transport,
@@ -38,14 +39,16 @@ export default function App() {
   const isBusy = status === 'submitted' || status === 'streaming';
   const isReady = status === 'ready';
   const isError = status === 'error' || Boolean(error);
-  const errorMessage =
-    uiError ??
-    (isError
-      ? 'The chat service is unavailable right now. Check the server logs for details.'
-      : null);
+  const errorMessage = isErrorDismissed
+    ? null
+    : uiError ??
+      (isError
+        ? 'The chat service is unavailable right now. Check the server logs for details.'
+        : null);
 
   useEffect(() => {
     if (error) {
+      setIsErrorDismissed(false);
       setUiError(error instanceof Error ? error.message : 'Unexpected chat error.');
     }
   }, [error]);
@@ -102,6 +105,7 @@ export default function App() {
       );
       setInput('');
     } catch (sendError) {
+      setIsErrorDismissed(false);
       setUiError(
         sendError instanceof Error
           ? sendError.message
@@ -130,7 +134,13 @@ export default function App() {
 
       <section className="chat">
         {errorMessage ? (
-          <ChatErrorBanner message={errorMessage} onDismiss={() => setUiError(null)} />
+          <ChatErrorBanner
+            message={errorMessage}
+            onDismiss={() => {
+              setIsErrorDismissed(true);
+              setUiError(null);
+            }}
+          />
         ) : null}
         {messages.length === 0 ? (
           <EmptyState />
