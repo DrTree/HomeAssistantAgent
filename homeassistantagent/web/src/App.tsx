@@ -9,6 +9,7 @@ import {
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import './App.css';
 import { AppHeader } from './components/AppHeader';
+import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/Composer';
 import { ModelSelector } from './components/ModelSelector';
 import { ToolMessage } from './components/ToolMessage';
@@ -138,18 +139,7 @@ export default function App() {
             </button>
           </div>
         ) : null}
-        {messages.length === 0 ? (
-          <div className="chat__empty">
-            <p>Start a conversation by asking your first question.</p>
-          </div>
-        ) : (
-          messages.map((message) => (
-            <div key={message.id} className={`chat__message chat__message--${message.role}`}>
-              <span className="chat__role">{message.role}</span>
-              <div className="chat__content">{renderMessageContent(message)}</div>
-            </div>
-          ))
-        )}
+        <ChatMessageList messages={messages} renderMessageContent={renderMessageContent} />
       </section>
 
       <Composer value={input} onChange={setInput} onSubmit={onSubmit} isBusy={isBusy} />
