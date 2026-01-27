@@ -24,7 +24,7 @@
   "options": {
     "openai_api_key": "",
     "mcp_access_token": "",
-    "mcp_url": "/api/chat"
+    "mcp_url": "api/chat"
   },
   "schema": {
     "openai_api_key": "str",

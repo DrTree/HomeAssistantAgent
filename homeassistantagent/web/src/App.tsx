@@ -32,7 +32,7 @@ export default function App() {
   const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
   const [uiError, setUiError] = useState<string | null>(null);
   const [isErrorDismissed, setIsErrorDismissed] = useState(false);
-  const transport = useMemo(() => new DefaultChatTransport({ api: '/api/chat' }), []);
+  const transport = useMemo(() => new DefaultChatTransport({ api: 'api/chat' }), []);
   const { messages, sendMessage, status, error, addToolOutput } = useChat({
     transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
