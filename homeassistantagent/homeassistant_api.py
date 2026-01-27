@@ -38,7 +38,14 @@ class HomeAssistantApiClient:
             with request.urlopen(req, timeout=self.timeout) as response:
                 body = response.read().decode("utf-8")
                 if body:
-                    return json.loads(body)
+                    content_type = response.headers.get_content_type()
+                    if content_type == "application/json" or body.lstrip().startswith(("{", "[")):
+                        try:
+                            return json.loads(body)
+                        except json.JSONDecodeError:
+                            logger.warning("Failed to decode JSON response, returning raw body.")
+                            return body
+                    return body
                 return None
         except HTTPError as exc:
             detail = exc.read().decode("utf-8") if exc.fp else str(exc)
