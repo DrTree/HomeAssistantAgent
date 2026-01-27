@@ -10,8 +10,11 @@ permissions:
 
 jobs:
   bump-version:
+    # Prevent infinite loop when this workflow pushes the bump commit
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    outputs:
+      did_bump: ${{ steps.commit.outputs.did_bump }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -38,9 +41,11 @@ jobs:
           PY
 
       - name: Commit version bump
+        id: commit
         run: |
           if git diff --quiet; then
             echo "No changes to commit."
+            echo "did_bump=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git config user.name "github-actions[bot]"
@@ -48,34 +53,52 @@ jobs:
           git add homeassistantagent/config.json
           git commit -m "chore: bump add-on version"
           git push origin HEAD:main
+          echo "did_bump=true" >> "$GITHUB_OUTPUT"
 
   notify_ha:
     name: Notify Home Assistant
     runs-on: ubuntu-latest
     needs: bump-version
-    if: always()
+    # Only ever notify for trusted "push to main" events, and only if we actually bumped.
+    if: >
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.bump-version.outputs.did_bump == 'true'
+    permissions:
+      contents: read
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Read bumped version
-        id: bumped_version
-        run: |
-          python - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          from pathlib import Path
-
-          config_path = Path('homeassistantagent/config.json')
-          data = json.loads(config_path.read_text())
-          print(f"version={data.get('version', '')}")
-          PY
-
       - name: Connect to Tailscale
         uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
+
+      - name: Read bumped version from main (via GitHub API)
+        id: bumped_version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+          # Fetch file content at HEAD of main
+          content_b64="$(curl -sS \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${OWNER}/${REPO}/contents/homeassistantagent/config.json?ref=main" \
+            | python -c "import sys, json; print(json.load(sys.stdin)['content'])")"
+
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import os, json, base64
+          content_b64 = os.environ["CONTENT_B64"]
+          raw = base64.b64decode(content_b64).decode("utf-8")
+          data = json.loads(raw)
+          print(f"version={data.get('version','')}")
+          PY
+        env:
+          CONTENT_B64: ${{ steps.bumped_version.env.CONTENT_B64 }}
 
       - name: Call HA webhook
         run: |
