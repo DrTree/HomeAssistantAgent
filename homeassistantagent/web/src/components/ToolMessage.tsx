@@ -4,18 +4,17 @@ import { parseCalculatorInput } from './toolUtils';
 
 export type ToolOutputPayload =
   | {
-      tool: string;
       toolCallId: string;
-      output: unknown;
-      state?: 'output-available';
-      errorText?: never;
+      output: {
+        approved: true;
+      };
     }
   | {
-      tool: string;
       toolCallId: string;
-      output?: never;
-      state: 'output-error';
-      errorText: string;
+      output: {
+        approved: false;
+        reason: string;
+      };
     };
 
 type ToolMessageProps = {
@@ -29,7 +28,6 @@ type ToolRenderer = {
   renderInput: (part: ToolPart) => ReactNode;
   renderSummary?: (part: ToolPart) => ReactNode;
   renderOutput?: (part: ToolPart) => ReactNode;
-  handleApprove?: (part: ToolPart) => ToolOutputPayload;
 };
 
 const ToolCard = ({
@@ -84,46 +82,6 @@ const calculatorRenderer: ToolRenderer = {
       </ToolDetails>
     );
   },
-  handleApprove: (part) => {
-    const parsedInput = parseCalculatorInput(part.input);
-
-    if (
-      typeof parsedInput.number_a !== 'number' ||
-      typeof parsedInput.number_b !== 'number' ||
-      !parsedInput.operator
-    ) {
-      return {
-        tool: 'calculator',
-        toolCallId: part.toolCallId,
-        state: 'output-error',
-        errorText: 'Missing calculator inputs.',
-      };
-    }
-
-    if (parsedInput.operator === '/' && parsedInput.number_b === 0) {
-      return {
-        tool: 'calculator',
-        toolCallId: part.toolCallId,
-        state: 'output-error',
-        errorText: 'Cannot divide by zero.',
-      };
-    }
-
-    const result =
-      parsedInput.operator === '+'
-        ? parsedInput.number_a + parsedInput.number_b
-        : parsedInput.operator === '-'
-          ? parsedInput.number_a - parsedInput.number_b
-          : parsedInput.operator === '*'
-            ? parsedInput.number_a * parsedInput.number_b
-            : parsedInput.number_a / parsedInput.number_b;
-
-    return {
-      tool: 'calculator',
-      toolCallId: part.toolCallId,
-      output: result,
-    };
-  },
 };
 
 const toolRenderers: Record<string, ToolRenderer> = {
@@ -172,15 +130,10 @@ export const ToolMessage = ({ part, addToolOutput }: ToolMessageProps) => {
               type="button"
               className="chat__tool-button"
               onClick={() => {
-                const payload =
-                  renderer?.handleApprove?.(part) ??
-                  ({
-                    tool: toolName,
-                    toolCallId: part.toolCallId,
-                    state: 'output-error',
-                    errorText: `No renderer available for ${toolName}.`,
-                  } satisfies ToolOutputPayload);
-                addToolOutput(payload);
+                addToolOutput({
+                  toolCallId: part.toolCallId,
+                  output: { approved: true },
+                });
               }}
             >
               Approve
@@ -190,10 +143,8 @@ export const ToolMessage = ({ part, addToolOutput }: ToolMessageProps) => {
               className="chat__tool-button chat__tool-button--deny"
               onClick={() =>
                 addToolOutput({
-                  tool: toolName,
                   toolCallId: part.toolCallId,
-                  state: 'output-error',
-                  errorText: `${toolName} request denied by user.`,
+                  output: { approved: false, reason: 'User denied' },
                 })
               }
             >
