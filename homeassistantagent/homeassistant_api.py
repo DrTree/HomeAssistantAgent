@@ -53,11 +53,11 @@ class HomeAssistantApiClient:
         except URLError as exc:
             raise RuntimeError(f"Home Assistant API connection error: {exc.reason}") from exc
 
-    def render_template(self, template: str, variables: dict[str, Any] | None = None) -> str:
+    def render_template(
+        self, template: str, variables: dict[str, Any] | None = None
+    ) -> str | dict[str, Any] | None:
         payload = {"template": template}
         if variables:
             payload["variables"] = variables
         response = self._request("POST", "/api/template", payload)
-        if isinstance(response, str):
-            return response
-        raise RuntimeError("Unexpected response from Home Assistant template API.")
+        return response
