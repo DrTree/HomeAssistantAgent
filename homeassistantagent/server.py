@@ -35,6 +35,18 @@ options = load_options()
 openai_api_key = options.get("openai_api_key") or os.environ.get("OPENAI_API_KEY")
 model_name = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 
+ALLOWED_MODELS = {
+    "gpt-5.2",
+    "gpt-5.1",
+    "gpt-5",
+    "gpt-5-mini",
+    "gpt-5-nano",
+    "gpt-5.2-chat-latest",
+    "gpt-5.1-chat-latest",
+    "gpt-5-chat-latest",
+    "gpt-5.2-codex",
+}
+
 provider = OpenAIProvider(api_key=openai_api_key)
 model = OpenAIChatModel(model_name, provider=provider)
 home_assistant_client = HomeAssistantApiClient()
@@ -98,7 +110,25 @@ app.add_middleware(
 
 @app.post("/api/chat")
 async def chat(request: Request):
-    return await VercelAIAdapter.dispatch_request(request, agent=agent)
+    model_override = None
+    body_bytes = await request.body()
+    if body_bytes:
+        try:
+            payload = json.loads(body_bytes)
+        except json.JSONDecodeError:
+            payload = None
+        if isinstance(payload, dict):
+            requested_model = payload.get("model")
+            if isinstance(requested_model, str) and requested_model in ALLOWED_MODELS:
+                model_override = requested_model
+
+    model_override_instance = (
+        OpenAIChatModel(model_override, provider=provider) if model_override else None
+    )
+
+    return await VercelAIAdapter.dispatch_request(
+        request, agent=agent, model=model_override_instance
+    )
 
 
 if WEB_DIST.exists():

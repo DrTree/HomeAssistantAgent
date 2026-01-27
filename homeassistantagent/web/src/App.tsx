@@ -10,7 +10,19 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import './App.css';
 
 export default function App() {
+  const modelOptions = [
+    'gpt-5.2',
+    'gpt-5.1',
+    'gpt-5',
+    'gpt-5-mini',
+    'gpt-5-nano',
+    'gpt-5.2-chat-latest',
+    'gpt-5.1-chat-latest',
+    'gpt-5-chat-latest',
+    'gpt-5.2-codex',
+  ];
   const [input, setInput] = useState('');
+  const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
   const [uiError, setUiError] = useState<string | null>(null);
   const transport = useMemo(() => new DefaultChatTransport({ api: '/api/chat' }), []);
   const { messages, sendMessage, status, error, addToolOutput } = useChat({
@@ -223,7 +235,14 @@ export default function App() {
     }
 
     try {
-      await sendMessage({ text: trimmedInput });
+      await sendMessage(
+        { text: trimmedInput },
+        {
+          body: {
+            model: selectedModel,
+          },
+        },
+      );
       setInput('');
     } catch (sendError) {
       setUiError(
@@ -247,6 +266,24 @@ export default function App() {
           {isReady ? 'Ready' : isError ? 'Offline' : 'Thinking…'}
         </span>
       </header>
+
+      <section className="controls">
+        <label className="controls__label" htmlFor="model-select">
+          Model
+        </label>
+        <select
+          id="model-select"
+          className="controls__select"
+          value={selectedModel}
+          onChange={(event) => setSelectedModel(event.target.value)}
+        >
+          {modelOptions.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </section>
 
       <section className="chat">
         {errorMessage ? (
