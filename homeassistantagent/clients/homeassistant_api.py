@@ -61,3 +61,15 @@ class HomeAssistantApiClient:
             payload["variables"] = variables
         response = self._request("POST", "/api/template", payload)
         return response
+
+    def call_service(
+        self,
+        domain: str,
+        service: str,
+        service_data: dict[str, Any] | None = None,
+        return_response: bool = False,
+    ) -> Any:
+        payload = service_data or {}
+        query = "?return_response" if return_response else ""
+        path = f"/api/services/{domain}/{service}{query}"
+        return self._request("POST", path, payload)

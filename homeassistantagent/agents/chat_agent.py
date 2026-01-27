@@ -1,7 +1,7 @@
 from pydantic_ai import Agent, DeferredToolRequests, Tool
 from pydantic_ai.models import Model
 
-from tools import calculator, render_home_assistant_template
+from tools import calculator, call_home_assistant_service, render_home_assistant_template
 
 
 class ChatAgent:
@@ -22,6 +22,7 @@ class ChatAgent:
             output_type=[str, DeferredToolRequests],
             tools=[
                 Tool(calculator, requires_approval=True),
-                Tool(render_home_assistant_template, requires_approval=False),
+                Tool(call_home_assistant_service, requires_approval=True),
+                Tool(render_home_assistant_template, requires_approval=True),
             ],
         )
