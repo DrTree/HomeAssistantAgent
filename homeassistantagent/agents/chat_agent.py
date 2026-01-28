@@ -25,6 +25,7 @@ from tools import (
     ha_ws_area_registry_list,
     ha_ws_resolve_from_area,
     render_home_assistant_template,
+    set_entity_state,
 )
 
 
@@ -70,5 +71,6 @@ class ChatAgent:
                 Tool(ha_ws_area_registry_list, requires_approval=False),
                 Tool(ha_ws_resolve_from_area, requires_approval=False),
                 Tool(render_home_assistant_template, requires_approval=False),
+                Tool(set_entity_state, requires_approval=True),
             ],
         )

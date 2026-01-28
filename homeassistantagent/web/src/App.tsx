@@ -14,7 +14,6 @@ import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/Composer';
 import { ModelSelector } from './components/ModelSelector';
 import { ToolMessage } from './components/ToolMessage';
-import type { ToolOutputPayload } from './components/ToolMessage';
 
 export default function App() {
   const modelOptions = [
@@ -61,6 +60,23 @@ export default function App() {
       console.log('Chat messages', messages);
     }
   }, [logMessages, messages]);
+
+  const onCopyMessages = async () => {
+    if (!navigator?.clipboard?.writeText) {
+      setIsErrorDismissed(false);
+      setUiError('Clipboard access is not available in this browser.');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(messages, null, 2));
+    } catch (copyError) {
+      setIsErrorDismissed(false);
+      setUiError(
+        copyError instanceof Error ? copyError.message : 'Unable to copy chat messages.',
+      );
+    }
+  };
 
   const renderMessageContent = (message: UIMessage) => {
     if (message.parts.length === 0) {
@@ -141,6 +157,8 @@ export default function App() {
         onChange={setSelectedModel}
         debugMessages={logMessages}
         onDebugChange={setLogMessages}
+        onCopyMessages={onCopyMessages}
+        copyDisabled={messages.length === 0}
       />
 
       <section className="chat">

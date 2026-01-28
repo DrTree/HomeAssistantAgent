@@ -16,6 +16,7 @@ from websockets.exceptions import ConnectionClosed
 DEFAULT_BASE_URL = os.environ.get("HOME_ASSISTANT_URL", "http://supervisor/core")
 DEFAULT_TOKEN = os.environ.get("SUPERVISOR_TOKEN") or os.environ.get("HOME_ASSISTANT_TOKEN")
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class ConnectionState(Enum):
@@ -569,6 +570,7 @@ class HomeAssistantWebSocketClient:
                     await self._handle_disconnect("OVERSIZE", "Message too large.")
                     return
                 self._last_received_at = time.time()
+                logger.debug("WS recv raw: %s", raw)
                 try:
                     message = json.loads(raw)
                 except json.JSONDecodeError:
@@ -741,6 +743,7 @@ class HomeAssistantWebSocketClient:
         if not self._ws:
             raise HomeAssistantWsError("DISCONNECTED", "WebSocket not connected.")
         payload = json.dumps(message)
+        logger.debug("WS send raw: %s", payload)
         await self._ws.send(payload)
 
     async def _recv_json(self, timeout_s: float) -> dict[str, Any]:
@@ -752,6 +755,7 @@ class HomeAssistantWebSocketClient:
             raise HomeAssistantWsError("TIMEOUT", "Timed out waiting for response.") from exc
         if isinstance(raw, bytes):
             raw = raw.decode("utf-8")
+        logger.debug("WS recv raw: %s", raw)
         return json.loads(raw)
 
     def _build_ws_url(self, base_url: str) -> str:

@@ -2,14 +2,16 @@ import { type UIMessage, isToolUIPart } from 'ai';
 import type { ReactNode } from 'react';
 import { parseCalculatorInput } from './toolUtils';
 
-export type ToolOutputPayload =
+type ToolOutputPayload =
   | {
+      tool: string;
       toolCallId: string;
       output: {
         approved: true;
       };
     }
   | {
+      tool: string;
       toolCallId: string;
       output: {
         approved: false;
@@ -88,7 +90,7 @@ const calculatorRenderer: ToolRenderer = {
 };
 
 const toolRenderers: Record<string, ToolRenderer> = {
-  calculator: calculatorRenderer,
+  //calculator: calculatorRenderer,
 };
 
 const renderToolInput = (part: ToolPart, renderer?: ToolRenderer) => {
@@ -122,6 +124,7 @@ export const ToolMessage = ({ part, addToolOutput }: ToolMessageProps) => {
 
   const toolName = toolTypeToName(part);
   const renderer = toolRenderers[toolName];
+  const toolId = part.type.replace(/^tool-/, '');
 
   if (part.state === 'approval-requested' || part.state === 'input-available') {
     return (
@@ -134,6 +137,7 @@ export const ToolMessage = ({ part, addToolOutput }: ToolMessageProps) => {
               className="chat__tool-button"
               onClick={() => {
                 addToolOutput({
+                  tool: toolId.replace(/^tool-/, ""),
                   toolCallId: part.toolCallId,
                   output: { approved: true },
                 });
@@ -146,6 +150,7 @@ export const ToolMessage = ({ part, addToolOutput }: ToolMessageProps) => {
               className="chat__tool-button chat__tool-button--deny"
               onClick={() =>
                 addToolOutput({
+                  tool: toolId.replace(/^tool-/, ""),
                   toolCallId: part.toolCallId,
                   output: { approved: false, reason: 'User denied' },
                 })
@@ -156,7 +161,7 @@ export const ToolMessage = ({ part, addToolOutput }: ToolMessageProps) => {
           </div>
         }
       >
-        {renderToolInput(part, renderer)}
+        {JSON.stringify(part, null, 2)}
       </ToolCard>
     );
   }
@@ -173,6 +178,7 @@ export const ToolMessage = ({ part, addToolOutput }: ToolMessageProps) => {
   if (part.state === 'output-available') {
     return (
       <ToolCard title={`${toolName} result`}>
+        {JSON.stringify(part, null, 2)}
         {renderToolSummary(part, renderer)}
         {renderToolOutput(part, renderer)}
       </ToolCard>

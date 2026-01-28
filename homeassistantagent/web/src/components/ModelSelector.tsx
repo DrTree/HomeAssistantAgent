@@ -4,6 +4,8 @@ interface ModelSelectorProps {
   onChange: (value: string) => void;
   debugMessages: boolean;
   onDebugChange: (value: boolean) => void;
+  onCopyMessages: () => void;
+  copyDisabled: boolean;
 }
 
 export function ModelSelector({
@@ -12,6 +14,8 @@ export function ModelSelector({
   onChange,
   debugMessages,
   onDebugChange,
+  onCopyMessages,
+  copyDisabled,
 }: ModelSelectorProps) {
   return (
     <section className="controls">
@@ -40,6 +44,14 @@ export function ModelSelector({
         />
         Log messages
       </label>
+      <button
+        type="button"
+        className="controls__button"
+        onClick={onCopyMessages}
+        disabled={copyDisabled}
+      >
+        Copy JSON
+      </button>
     </section>
   );
 }
