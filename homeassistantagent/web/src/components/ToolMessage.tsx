@@ -74,11 +74,14 @@ const calculatorRenderer: ToolRenderer = {
     );
   },
   renderOutput: (part) => {
+    if (typeof part.output !== 'number') {
+      return <ToolJsonFallback value={part.output} />;
+    }
+
     const parsedInput = parseCalculatorInput(part.input);
     return (
       <ToolDetails>
-        {parsedInput.number_a} {parsedInput.operator} {parsedInput.number_b} ={' '}
-        {part.output as number}
+        {parsedInput.number_a} {parsedInput.operator} {parsedInput.number_b} = {part.output}
       </ToolDetails>
     );
   },
