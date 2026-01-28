@@ -1,4 +1,3 @@
-import { useChat } from '@ai-sdk/react';
 import {
   DefaultChatTransport,
   type UIMessage,
@@ -14,6 +13,8 @@ import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/Composer';
 import { ModelSelector } from './components/ModelSelector';
 import { ToolMessage } from './components/ToolMessage';
+import { ApprovalProvider } from './hooks/useApproval';
+import { useChatWithModel } from './hooks/useChatWithModel';
 
 export default function App() {
   const modelOptions = [
@@ -33,9 +34,10 @@ export default function App() {
   const [isErrorDismissed, setIsErrorDismissed] = useState(false);
   const [logMessages, setLogMessages] = useState(false);
   const transport = useMemo(() => new DefaultChatTransport({ api: 'api/chat' }), []);
-  const { messages, sendMessage, status, error } = useChat({
+  const { messages, sendMessage, status, error } = useChatWithModel({
     transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    model: selectedModel,
   });
   const isBusy = status === 'submitted' || status === 'streaming';
   const isReady = status === 'ready';
@@ -91,15 +93,14 @@ export default function App() {
           </p>
         );
       }
-      if (isToolUIPart(part)) {
-        return (
-          <ToolMessage
-            key={`${message.id}-tool-${index}`}
-            part={part}
-            sendMessage={sendMessage}
-          />
-        );
-      }
+        if (isToolUIPart(part)) {
+          return (
+            <ToolMessage
+              key={`${message.id}-tool-${index}`}
+              part={part}
+            />
+          );
+        }
       return (
         <pre key={`${message.id}-unsupported-${index}`} className="chat__text">
           {JSON.stringify(part, null, 2)}
@@ -171,7 +172,9 @@ export default function App() {
             }}
           />
         ) : null}
-        <ChatMessageList messages={messages} renderMessageContent={renderMessageContent} />
+        <ApprovalProvider sendMessage={sendMessage}>
+          <ChatMessageList messages={messages} renderMessageContent={renderMessageContent} />
+        </ApprovalProvider>
       </section>
 
       <Composer value={input} onChange={setInput} onSubmit={onSubmit} isBusy={isBusy} />

@@ -1,21 +1,10 @@
 import { type UIMessage, isToolUIPart } from 'ai';
 import type { ReactNode } from 'react';
 import { parseCalculatorInput } from './toolUtils';
-
-type SendMessage = (
-  message: { text: string },
-  options?: {
-    body?: {
-      deferredToolResults?: {
-        approvals?: Record<string, boolean>;
-      };
-    };
-  },
-) => Promise<void>;
+import { useApproval } from '../hooks/useApproval';
 
 type ToolMessageProps = {
   part: UIMessage['parts'][number];
-  sendMessage: SendMessage;
 };
 
 type ToolPart = Extract<UIMessage['parts'][number], { type: `tool-${string}` }>;
@@ -111,11 +100,12 @@ const renderToolOutput = (part: ToolPart, renderer?: ToolRenderer) => {
   return <ToolJsonFallback value={part.output} />;
 };
 
-export const ToolMessage = ({ part, sendMessage }: ToolMessageProps) => {
+export const ToolMessage = ({ part }: ToolMessageProps) => {
   if (!isToolUIPart(part)) {
     return null;
   }
 
+  const { approve, deny } = useApproval();
   const toolName = toolTypeToName(part);
   const renderer = toolRenderers[toolName];
 
@@ -129,18 +119,7 @@ export const ToolMessage = ({ part, sendMessage }: ToolMessageProps) => {
               type="button"
               className="chat__tool-button"
               onClick={async () => {
-                await sendMessage(
-                  { text: 'Carry on' },
-                  {
-                    body: {
-                      deferredToolResults: {
-                        approvals: {
-                          [part.toolCallId]: true,
-                        },
-                      },
-                    },
-                  },
-                );
+                await approve(part.toolCallId);
               }}
             >
               Approve
@@ -149,18 +128,7 @@ export const ToolMessage = ({ part, sendMessage }: ToolMessageProps) => {
               type="button"
               className="chat__tool-button chat__tool-button--deny"
               onClick={async () => {
-                await sendMessage(
-                  { text: '' },
-                  {
-                    body: {
-                      deferredToolResults: {
-                        approvals: {
-                          [part.toolCallId]: false,
-                        },
-                      },
-                    },
-                  },
-                );
+                await deny(part.toolCallId);
               }}
             >
               Deny

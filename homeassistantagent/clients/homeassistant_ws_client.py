@@ -10,7 +10,7 @@ from typing import Any, Awaitable, Callable
 from urllib import parse
 
 import websockets
-from websockets.client import WebSocketClientProtocol
+from websockets.legacy.client import WebSocketClientProtocol
 from websockets.exceptions import ConnectionClosed
 
 DEFAULT_BASE_URL = os.environ.get("HOME_ASSISTANT_URL", "http://supervisor/core")

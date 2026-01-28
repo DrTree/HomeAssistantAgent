@@ -16,6 +16,9 @@ from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 
 dotenv.load_dotenv()
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 APP_ROOT = Path(__file__).resolve().parent
 if str(APP_ROOT) not in sys.path:
     sys.path.insert(0, str(APP_ROOT))
@@ -71,8 +74,6 @@ def build_deferred_tool_results(payload: dict) -> DeferredToolResults | None:
 
 provider = OpenAIProvider(api_key=openai_api_key)
 model = OpenAIChatModel(model_name, provider=provider)
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 agent = ChatAgent.build_agent(model)
