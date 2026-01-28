@@ -2,26 +2,20 @@ import { type UIMessage, isToolUIPart } from 'ai';
 import type { ReactNode } from 'react';
 import { parseCalculatorInput } from './toolUtils';
 
-type ToolOutputPayload =
-  | {
-      tool: string;
-      toolCallId: string;
-      output: {
-        approved: true;
-      };
-    }
-  | {
-      tool: string;
-      toolCallId: string;
-      output: {
-        approved: false;
-        reason: string;
+type SendMessage = (
+  message: { text: string },
+  options?: {
+    body?: {
+      deferredToolResults?: {
+        approvals?: Record<string, boolean>;
       };
     };
+  },
+) => Promise<void>;
 
 type ToolMessageProps = {
   part: UIMessage['parts'][number];
-  addToolOutput: (payload: ToolOutputPayload) => void;
+  sendMessage: SendMessage;
 };
 
 type ToolPart = Extract<UIMessage['parts'][number], { type: `tool-${string}` }>;
@@ -117,14 +111,13 @@ const renderToolOutput = (part: ToolPart, renderer?: ToolRenderer) => {
   return <ToolJsonFallback value={part.output} />;
 };
 
-export const ToolMessage = ({ part, addToolOutput }: ToolMessageProps) => {
+export const ToolMessage = ({ part, sendMessage }: ToolMessageProps) => {
   if (!isToolUIPart(part)) {
     return null;
   }
 
   const toolName = toolTypeToName(part);
   const renderer = toolRenderers[toolName];
-  const toolId = part.type.replace(/^tool-/, '');
 
   if (part.state === 'approval-requested' || part.state === 'input-available') {
     return (
@@ -135,12 +128,19 @@ export const ToolMessage = ({ part, addToolOutput }: ToolMessageProps) => {
             <button
               type="button"
               className="chat__tool-button"
-              onClick={() => {
-                addToolOutput({
-                  tool: toolId.replace(/^tool-/, ""),
-                  toolCallId: part.toolCallId,
-                  output: { approved: true },
-                });
+              onClick={async () => {
+                await sendMessage(
+                  { text: 'Carry on' },
+                  {
+                    body: {
+                      deferredToolResults: {
+                        approvals: {
+                          [part.toolCallId]: true,
+                        },
+                      },
+                    },
+                  },
+                );
               }}
             >
               Approve
@@ -148,13 +148,20 @@ export const ToolMessage = ({ part, addToolOutput }: ToolMessageProps) => {
             <button
               type="button"
               className="chat__tool-button chat__tool-button--deny"
-              onClick={() =>
-                addToolOutput({
-                  tool: toolId.replace(/^tool-/, ""),
-                  toolCallId: part.toolCallId,
-                  output: { approved: false, reason: 'User denied' },
-                })
-              }
+              onClick={async () => {
+                await sendMessage(
+                  { text: '' },
+                  {
+                    body: {
+                      deferredToolResults: {
+                        approvals: {
+                          [part.toolCallId]: false,
+                        },
+                      },
+                    },
+                  },
+                );
+              }}
             >
               Deny
             </button>

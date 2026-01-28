@@ -9,6 +9,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from pydantic_ai import DeferredToolResults, ToolDenied
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
@@ -49,6 +50,25 @@ ALLOWED_MODELS = {
     "gpt-5.2-codex",
 }
 
+def build_deferred_tool_results(payload: dict) -> DeferredToolResults | None:
+    deferred_payload = payload.get("deferredToolResults")
+    if not isinstance(deferred_payload, dict):
+        return None
+
+    approvals = deferred_payload.get("approvals")
+    if not isinstance(approvals, dict):
+        return None
+
+    results = DeferredToolResults()
+    for tool_call_id, approval in approvals.items():
+        if not isinstance(tool_call_id, str):
+            continue
+        if approval is True:
+            results.approvals[tool_call_id] = True
+        elif approval is False:
+            results.approvals[tool_call_id] = ToolDenied(message="User denied")
+    return results
+
 provider = OpenAIProvider(api_key=openai_api_key)
 model = OpenAIChatModel(model_name, provider=provider)
 logging.basicConfig(level=logging.INFO)
@@ -80,6 +100,7 @@ async def chat(request: Request):
         return
 
     model_override = None
+    deferred_tool_results = None
     body_bytes = await request.body()
     if body_bytes:
         try:
@@ -90,6 +111,11 @@ async def chat(request: Request):
             requested_model = payload.get("model")
             if isinstance(requested_model, str) and requested_model in ALLOWED_MODELS:
                 model_override = requested_model
+            deferred_tool_results = build_deferred_tool_results(payload)
+            if deferred_tool_results is not None:
+                logger.debug(
+                    "Received deferred tool results: %s", payload.get("deferredToolResults")
+                )
 
     model_override_instance = (
         OpenAIChatModel(model_override, provider=provider) if model_override else None
@@ -100,6 +126,7 @@ async def chat(request: Request):
         agent=agent,
         model=model_override_instance,
         on_complete=log_on_complete,
+        deferred_tool_results=deferred_tool_results,
     )
 
 

@@ -33,7 +33,7 @@ export default function App() {
   const [isErrorDismissed, setIsErrorDismissed] = useState(false);
   const [logMessages, setLogMessages] = useState(false);
   const transport = useMemo(() => new DefaultChatTransport({ api: 'api/chat' }), []);
-  const { messages, sendMessage, status, error, addToolOutput } = useChat({
+  const { messages, sendMessage, status, error } = useChat({
     transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   });
@@ -96,7 +96,7 @@ export default function App() {
           <ToolMessage
             key={`${message.id}-tool-${index}`}
             part={part}
-            addToolOutput={addToolOutput}
+            sendMessage={sendMessage}
           />
         );
       }
