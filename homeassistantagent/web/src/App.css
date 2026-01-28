@@ -67,6 +67,20 @@
   color: #e2e8f0;
 }
 
+.controls__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #cbd5f5;
+}
+
+.controls__checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #38bdf8;
+}
+
 .chat {
   flex: 1;
   min-height: 380px;

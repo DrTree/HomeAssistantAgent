@@ -32,6 +32,7 @@ export default function App() {
   const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
   const [uiError, setUiError] = useState<string | null>(null);
   const [isErrorDismissed, setIsErrorDismissed] = useState(false);
+  const [logMessages, setLogMessages] = useState(false);
   const transport = useMemo(() => new DefaultChatTransport({ api: 'api/chat' }), []);
   const { messages, sendMessage, status, error, addToolOutput } = useChat({
     transport,
@@ -54,6 +55,12 @@ export default function App() {
       setUiError(error instanceof Error ? error.message : 'Unexpected chat error.');
     }
   }, [error]);
+
+  useEffect(() => {
+    if (logMessages) {
+      console.log('Chat messages', messages);
+    }
+  }, [logMessages, messages]);
 
   const renderMessageContent = (message: UIMessage) => {
     if (message.parts.length === 0) {
@@ -132,6 +139,8 @@ export default function App() {
         modelOptions={modelOptions}
         selectedModel={selectedModel}
         onChange={setSelectedModel}
+        debugMessages={logMessages}
+        onDebugChange={setLogMessages}
       />
 
       <section className="chat">
