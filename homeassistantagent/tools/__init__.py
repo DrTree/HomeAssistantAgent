@@ -20,6 +20,7 @@ from .home_assistant_rest import (
     ha_rest_ping,
     ha_rest_set_state,
 )
+from .home_assistant_ws import ha_ws_area_registry_list, ha_ws_resolve_from_area
 from .render_home_assistant_template import render_home_assistant_template
 
 __all__ = [
@@ -43,5 +44,7 @@ __all__ = [
     "ha_rest_set_state",
     "ha_rest_delete_state",
     "ha_rest_handle_intent",
+    "ha_ws_area_registry_list",
+    "ha_ws_resolve_from_area",
     "render_home_assistant_template",
 ]

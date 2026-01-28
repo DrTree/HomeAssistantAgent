@@ -20,6 +20,7 @@ if str(APP_ROOT) not in sys.path:
     sys.path.insert(0, str(APP_ROOT))
 
 from agents import ChatAgent
+from pydantic_ai.run import AgentRunResult
 
 WEB_DIST = APP_ROOT / "web" / "dist"
 OPTIONS_PATH = Path("/data/options.json")
@@ -51,6 +52,7 @@ ALLOWED_MODELS = {
 provider = OpenAIProvider(api_key=openai_api_key)
 model = OpenAIChatModel(model_name, provider=provider)
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 agent = ChatAgent.build_agent(model)
@@ -67,6 +69,16 @@ app.add_middleware(
 
 @app.post("/api/chat")
 async def chat(request: Request):
+    async def log_on_complete(result: AgentRunResult):
+        u = result.usage()
+        # cache_read_tokens corresponds to "cached input tokens" in OpenAI pricing terms
+        logger.info(
+            f"[TOKENS] requests={u.requests} "
+            f"in={u.input_tokens} cache_read={u.cache_read_tokens} cache_write={u.cache_write_tokens} "
+            f"out={u.output_tokens} tool_calls={u.tool_calls} details={u.details}"
+        )
+        return
+
     model_override = None
     body_bytes = await request.body()
     if body_bytes:
@@ -84,7 +96,10 @@ async def chat(request: Request):
     )
 
     return await VercelAIAdapter.dispatch_request(
-        request, agent=agent, model=model_override_instance
+        request,
+        agent=agent,
+        model=model_override_instance,
+        on_complete=log_on_complete,
     )
 
 
