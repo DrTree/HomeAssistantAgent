@@ -581,6 +581,7 @@ class HomeAssistantWebSocketClient:
                     if "id" in message:
                         pong["id"] = message["id"]
                     await self._send_json(pong)
+                    logger.info("WS pong sent id=%s", message.get("id"))
                     continue
                 if "id" in message and message.get("type") == "result":
                     await self._handle_result(message)

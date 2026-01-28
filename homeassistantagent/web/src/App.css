@@ -187,6 +187,20 @@
   margin: 0;
 }
 
+.chat__tool-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #e2e8f0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat__tool-toggle:hover,
+.chat__tool-toggle:focus-visible {
+  text-decoration: underline;
+}
+
 .chat__tool {
   border-radius: 12px;
   padding: 12px;

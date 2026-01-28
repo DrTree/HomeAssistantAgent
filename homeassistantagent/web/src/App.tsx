@@ -4,6 +4,10 @@ import {
   isTextUIPart,
   isToolUIPart,
   lastAssistantMessageIsCompleteWithToolCalls,
+  StepStartUIPart,
+  UIMessagePart,
+  UIDataTypes,
+  UITools
 } from 'ai';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import './App.css';
@@ -15,6 +19,7 @@ import { ModelSelector } from './components/ModelSelector';
 import { ToolMessage } from './components/ToolMessage';
 import { ApprovalProvider } from './hooks/useApproval';
 import { useChatWithModel } from './hooks/useChatWithModel';
+
 
 export default function App() {
   const modelOptions = [
@@ -101,11 +106,6 @@ export default function App() {
             />
           );
         }
-      return (
-        <pre key={`${message.id}-unsupported-${index}`} className="chat__text">
-          {JSON.stringify(part, null, 2)}
-        </pre>
-      );
     });
   };
 

@@ -97,7 +97,7 @@ class HomeAssistantApiClient:
     def render_template(
         self, template: str, variables: dict[str, Any] | None = None
     ) -> str | dict[str, Any] | None:
-        payload = {"template": template}
+        payload: dict[str, Any] = {"template": template}
         if variables:
             payload["variables"] = variables
         response = self._request("POST", "/api/template", payload=payload)

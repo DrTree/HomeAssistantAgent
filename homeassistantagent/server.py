@@ -16,7 +16,7 @@ from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 
 dotenv.load_dotenv()
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 APP_ROOT = Path(__file__).resolve().parent
@@ -112,6 +112,9 @@ async def chat(request: Request):
             requested_model = payload.get("model")
             if isinstance(requested_model, str) and requested_model in ALLOWED_MODELS:
                 model_override = requested_model
+            ## This is a hack, for some reason the adapter isn't picking these up automatically
+            ## Maybe there is a naming mismatch?
+            
             deferred_tool_results = build_deferred_tool_results(payload)
             if deferred_tool_results is not None:
                 logger.debug(
