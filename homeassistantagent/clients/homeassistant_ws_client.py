@@ -520,6 +520,9 @@ class HomeAssistantWebSocketClient:
         )
         message = {"id": command_id, "type": command_type, **payload}
         try:
+            logger.debug(
+                "WS send command id=%s type=%s write=%s", command_id, command_type, is_write
+            )
             await self._send_json(message)
             response = await asyncio.wait_for(future, timeout=timeout_s)
         except asyncio.TimeoutError as exc:
@@ -541,6 +544,7 @@ class HomeAssistantWebSocketClient:
 
         if not response.get("success", True):
             raise HomeAssistantWsError("HA_ERROR", "Home Assistant error.", response.get("error"))
+        logger.debug("WS command ok id=%s type=%s", command_id, command_type)
         return response
 
     async def _reader_loop(self) -> None:
@@ -592,6 +596,9 @@ class HomeAssistantWebSocketClient:
         command_id = message.get("id")
         future = self._pending.get(command_id)
         if future and not future.done():
+            logger.debug(
+                "WS result id=%s success=%s", command_id, message.get("success", True)
+            )
             future.set_result(message)
 
     async def _handle_event(self, message: dict[str, Any]) -> None:
@@ -602,6 +609,12 @@ class HomeAssistantWebSocketClient:
         )
         if not handle:
             return
+        logger.debug(
+            "WS event id=%s handle=%s name=%s",
+            ha_id,
+            handle.handle_id,
+            handle.logical_name,
+        )
         event_payload = message.get("event", {})
         handle.last_used_at = time.time()
         await self._enqueue_event(handle.handle_id, event_payload)
@@ -708,7 +721,7 @@ class HomeAssistantWebSocketClient:
     async def _handle_disconnect(self, code: str, message: str) -> None:
         if self._state == ConnectionState.CLOSING:
             return
-        logger.warning("WS disconnected: %s", message)
+        logger.warning("WS disconnected: %s (code=%s)", message, code)
         self._ready_event.clear()
         self._state = ConnectionState.DISCONNECTED
         if self._ws:

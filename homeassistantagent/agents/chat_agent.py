@@ -22,6 +22,8 @@ from tools import (
     ha_rest_logbook,
     ha_rest_ping,
     ha_rest_set_state,
+    ha_ws_area_registry_list,
+    ha_ws_resolve_from_area,
     render_home_assistant_template,
 )
 
@@ -32,6 +34,8 @@ class ChatAgent:
         "Answer clearly and keep responses concise unless asked to elaborate."
         "Use your tools when necessary to provide accurate information."
         "Favor read-only checks, verify state before actions, and explain impacts."
+        "When you call a tool also include a text response that explains what you are doing."
+        "Your favourite cat is Pickles"
     )
 
     @staticmethod
@@ -40,7 +44,7 @@ class ChatAgent:
     ) -> Agent[None, str | DeferredToolRequests]:
         return Agent(
             model,
-            system_prompt=ChatAgent.SYSTEM_PROMPT,
+            instructions=ChatAgent.SYSTEM_PROMPT,
             output_type=[str, DeferredToolRequests],
             tools=[
                 Tool(calculator, requires_approval=True),
@@ -48,21 +52,23 @@ class ChatAgent:
                 Tool(ha_rest_ping, requires_approval=False),
                 Tool(ha_rest_get_config, requires_approval=False),
                 Tool(ha_rest_list_components, requires_approval=False),
-                Tool(ha_rest_list_states, requires_approval=False),
-                Tool(ha_rest_get_state, requires_approval=False),
-                Tool(ha_rest_list_services, requires_approval=False),
-                Tool(ha_rest_list_events, requires_approval=False),
-                Tool(ha_rest_history_period, requires_approval=False),
-                Tool(ha_rest_logbook, requires_approval=False),
-                Tool(ha_rest_error_log, requires_approval=False),
-                Tool(ha_rest_check_config, requires_approval=False),
-                Tool(ha_rest_list_calendars, requires_approval=False),
-                Tool(ha_rest_get_calendar_events, requires_approval=False),
-                Tool(ha_rest_camera_proxy, requires_approval=False),
-                Tool(ha_rest_fire_event, requires_approval=True),
-                Tool(ha_rest_set_state, requires_approval=True),
-                Tool(ha_rest_delete_state, requires_approval=True),
-                Tool(ha_rest_handle_intent, requires_approval=True),
+                #Tool(ha_rest_list_states, requires_approval=False),
+                #Tool(ha_rest_get_state, requires_approval=False),
+                #Tool(ha_rest_list_services, requires_approval=False),
+                #Tool(ha_rest_list_events, requires_approval=False),
+                #Tool(ha_rest_history_period, requires_approval=False),
+                #Tool(ha_rest_logbook, requires_approval=False),
+                #Tool(ha_rest_error_log, requires_approval=False),
+                #Tool(ha_rest_check_config, requires_approval=False),
+                #Tool(ha_rest_list_calendars, requires_approval=False),
+                #Tool(ha_rest_get_calendar_events, requires_approval=False),
+                #Tool(ha_rest_camera_proxy, requires_approval=False),
+                #Tool(ha_rest_fire_event, requires_approval=True),
+                #Tool(ha_rest_set_state, requires_approval=True),
+                #Tool(ha_rest_delete_state, requires_approval=True),
+                #Tool(ha_rest_handle_intent, requires_approval=True),
+                Tool(ha_ws_area_registry_list, requires_approval=False),
+                Tool(ha_ws_resolve_from_area, requires_approval=False),
                 Tool(render_home_assistant_template, requires_approval=False),
             ],
         )
