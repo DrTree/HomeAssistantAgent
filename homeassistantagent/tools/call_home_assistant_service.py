@@ -1,6 +1,9 @@
 import logging
 from typing import Any
 
+from pydantic_ai import RunContext
+from pydantic_ai.exceptions import ApprovalRequired
+
 from clients import HomeAssistantApiClient
 
 logger = logging.getLogger(__name__)
@@ -8,6 +11,7 @@ home_assistant_client = HomeAssistantApiClient()
 
 
 def call_home_assistant_service(
+    ctx: RunContext[None],
     domain: str,
     service: str,
     service_data: dict[str, Any] | None = None,
@@ -39,10 +43,16 @@ def call_home_assistant_service(
               containing `changed_states` and `service_response`) when successful.
             - error: Error message string when the request fails.
     """
+    domain_value = str(domain).lower()
+    service_value = str(service).lower()
+    is_light_service = domain_value == "light" and service_value in {"turn_on", "turn_off", "toggle"}
+    if not is_light_service and not ctx.tool_call_approved:
+        raise ApprovalRequired
+
     try:
         response = home_assistant_client.call_service(
-            domain=domain,
-            service=service,
+            domain=domain_value,
+            service=service_value,
             service_data=service_data,
             return_response=bool(return_response),
         )
