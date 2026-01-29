@@ -6,6 +6,15 @@ type ChatMessageListProps = {
   renderMessageContent: (message: UIMessage) => ReactNode;
 };
 
+const getReasoningParts = (message: UIMessage) =>
+  message.parts
+    .filter(
+      (part): part is { type: 'reasoning'; text: string } =>
+        'type' in part && part.type === 'reasoning' && typeof part.text === 'string',
+    )
+    .map((part) => part.text.trim())
+    .filter(Boolean);
+
 export function ChatMessageList({
   messages,
   renderMessageContent,
@@ -20,12 +29,27 @@ export function ChatMessageList({
 
   return (
     <>
-      {messages.map((message) => (
-        <div key={message.id} className={`chat__message chat__message--${message.role}`}>
-          <span className="chat__role">{message.role}</span>
-          <div className="chat__content">{renderMessageContent(message)}</div>
-        </div>
-      ))}
+      {messages.map((message) => {
+        const reasoningParts = message.role === 'assistant' ? getReasoningParts(message) : [];
+
+        return (
+          <div key={message.id} className={`chat__message chat__message--${message.role}`}>
+            <div className="chat__content">{renderMessageContent(message)}</div>
+            {reasoningParts.length > 0 ? (
+              <details className="chat__reasoning">
+                <summary>Reasoning</summary>
+                <div className="chat__reasoning-body">
+                  {reasoningParts.map((reasoning, index) => (
+                    <p key={`${message.id}-reasoning-${index}`} className="chat__reasoning-text">
+                      {reasoning}
+                    </p>
+                  ))}
+                </div>
+              </details>
+            ) : null}
+          </div>
+        );
+      })}
     </>
   );
 }
