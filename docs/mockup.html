@@ -1,0 +1,333 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  ChevronDown, 
+  MoreHorizontal, 
+  Plus, 
+  Mic, 
+  ArrowUp, 
+  Copy, 
+  Edit2,
+  Settings,
+  Terminal,
+  Cpu,
+  Check,
+  ChevronRight
+} from 'lucide-react';
+
+const App = () => {
+  const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [activeSubmenu, setActiveSubmenu] = useState(null); // 'models' or null
+  const [debugEnabled, setDebugEnabled] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('5.2');
+  
+  const menuRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  const models = ['5.2', '5.2 Turbo', '5.1 Legacy', '4.0 Optimized'];
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+        setActiveSubmenu(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      role: 'user',
+      content: 'Ok'
+    },
+    {
+      id: 2,
+      role: 'assistant',
+      content: (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">Cool 👍</span>
+          </div>
+          <p className="text-[16px] leading-relaxed text-white/90">
+            I'll keep it simple then. When you're ready, just drop <span className="font-bold">anything concrete</span>—a question, a spec, a half-baked idea, or a "this feels wrong, why?"—and we'll take it from there.
+          </p>
+          <div className="space-y-4">
+            <p className="text-white/90">If it helps, you can reply with something like:</p>
+            <ul className="space-y-3 pl-2">
+              {[
+                "Explain X in detail",
+                "Review this idea",
+                "Create a spec for Y",
+                "Why is this behaving like Z?",
+                "or just paste code / a doc / a log and say \"thoughts?\""
+              ].map((text, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="mt-2 w-1.5 h-1.5 rounded-full bg-white/40 shrink-0"></span>
+                  <span className="text-white/90 italic cursor-pointer hover:text-white transition-colors">
+                    "{text}"
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="text-white/90">I'm here and warmed up.</p>
+        </div>
+      )
+    }
+  ]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
+
+  const handleSendMessage = () => {
+    if (!inputText.trim()) return;
+
+    const userMsg = {
+      id: Date.now(),
+      role: 'user',
+      content: inputText
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInputText('');
+    
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+
+    setIsTyping(true);
+    setTimeout(() => {
+      setIsTyping(false);
+      const agentMsg = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        content: `Got it! I'm processing your request about "${userMsg.content}". What specific details should we dive into first?`
+      };
+      setMessages(prev => [...prev, agentMsg]);
+    }, 1500);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const copyMessagesToClipboard = () => {
+    const text = messages.map(m => `${m.role.toUpperCase()}: ${typeof m.content === 'string' ? m.content : '[Formatted Content]'}`).join('\n\n');
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    setShowMenu(false);
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-[#171717] text-[#ececec] font-sans overflow-hidden">
+      {/* Top Navigation Bar */}
+      <header className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0 z-20">
+        <div className="relative" ref={menuRef}>
+          <div 
+            onClick={() => setShowMenu(!showMenu)}
+            className="flex items-center gap-2 cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-colors"
+          >
+            <div className="flex flex-col items-center">
+               <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mb-0.5"></div>
+               <div className="w-1.5 h-1.5 bg-blue-400 rounded-full opacity-50"></div>
+            </div>
+            <span className="font-semibold text-lg flex items-center gap-1">
+              HomeAgent <span className="text-white/40 font-normal">{selectedModel}</span>
+              <ChevronDown size={16} className={`text-white/40 transition-transform ${showMenu ? 'rotate-180' : ''}`} />
+            </span>
+          </div>
+
+          {/* Dropdown Menu */}
+          {showMenu && (
+            <div className="absolute top-full mt-2 left-0 w-64 bg-[#2f2f2f] border border-white/10 rounded-xl shadow-2xl py-2 z-50 text-[14px]">
+              {!activeSubmenu ? (
+                <>
+                  {/* Model Selection Row */}
+                  <button 
+                    onClick={() => setActiveSubmenu('models')}
+                    className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Cpu size={18} className="text-white/60" />
+                      <span>Switch Model</span>
+                    </div>
+                    <ChevronRight size={16} className="text-white/40" />
+                  </button>
+
+                  <div className="h-[1px] bg-white/5 my-1" />
+
+                  {/* Debug Logging Toggle */}
+                  <div className="flex items-center justify-between px-4 py-2.5 hover:bg-white/5 transition-colors cursor-pointer" onClick={() => setDebugEnabled(!debugEnabled)}>
+                    <div className="flex items-center gap-3">
+                      <Terminal size={18} className="text-white/60" />
+                      <span>Debug Logging</span>
+                    </div>
+                    <div className={`w-8 h-4 rounded-full relative transition-colors ${debugEnabled ? 'bg-blue-500' : 'bg-white/20'}`}>
+                      <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${debugEnabled ? 'left-4.5' : 'left-0.5'}`} />
+                    </div>
+                  </div>
+
+                  {/* Copy Messages */}
+                  <button 
+                    onClick={copyMessagesToClipboard}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors"
+                  >
+                    <Copy size={18} className="text-white/60" />
+                    <span>Copy Conversation</span>
+                  </button>
+
+                  <div className="h-[1px] bg-white/5 my-1" />
+
+                  <button className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors">
+                    <Settings size={18} className="text-white/60" />
+                    <span>Settings</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Submenu Header */}
+                  <button 
+                    onClick={() => setActiveSubmenu(null)}
+                    className="w-full flex items-center gap-3 px-3 py-2 border-b border-white/5 mb-1 text-white/60 hover:text-white"
+                  >
+                    <ChevronRight size={16} className="rotate-180" />
+                    <span className="font-medium text-xs uppercase tracking-wider">Models</span>
+                  </button>
+                  {models.map(m => (
+                    <button 
+                      key={m}
+                      onClick={() => {
+                        setSelectedModel(m);
+                        setActiveSubmenu(null);
+                        setShowMenu(false);
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/5 transition-colors"
+                    >
+                      <span>{m}</span>
+                      {selectedModel === m && <Check size={16} className="text-blue-400" />}
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+        <button className="p-2 hover:bg-white/5 rounded-full transition-colors">
+          <MoreHorizontal size={20} className="text-white/60" />
+        </button>
+      </header>
+
+      {/* Debug Console Overlay */}
+      {debugEnabled && (
+        <div className="absolute top-16 right-4 w-64 h-32 bg-black/80 border border-blue-500/30 rounded-lg p-2 font-mono text-[10px] text-blue-400 overflow-hidden pointer-events-none z-0">
+          <div className="opacity-70">
+            [SYS] Model version: {selectedModel}<br/>
+            [NET] Socket connected: 200 OK<br/>
+            [LOG] Stream buffer: 0.2ms<br/>
+            [LOG] Message count: {messages.length}<br/>
+            [ACT] Listening for input...
+          </div>
+        </div>
+      )}
+
+      {/* Chat Content Area */}
+      <main className="flex-1 overflow-y-auto px-4 py-6 scrollbar-hide">
+        <div className="max-w-2xl mx-auto w-full space-y-8 pb-4">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} group`}>
+              {msg.role === 'user' ? (
+                <>
+                  <div className="bg-[#2f2f2f] px-4 py-2 rounded-2xl max-w-[85%] text-[15px] leading-relaxed shadow-sm">
+                    {msg.content}
+                  </div>
+                  <div className="flex gap-4 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button className="p-1 hover:text-white transition-colors text-white/40">
+                      <Copy size={14} />
+                    </button>
+                    <button className="p-1 hover:text-white transition-colors text-white/40">
+                      <Edit2 size={14} />
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="w-full text-[16px] leading-relaxed text-white/90">
+                  {msg.content}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {isTyping && (
+            <div className="flex items-center gap-1.5 text-white/40 text-sm animate-pulse italic">
+              <div className="w-1 h-1 bg-white/40 rounded-full"></div>
+              <div className="w-1 h-1 bg-white/40 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+              <div className="w-1 h-1 bg-white/40 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+              <span>HomeAgent is thinking...</span>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </main>
+
+      {/* Bottom Input Area */}
+      <footer className="px-4 pb-8 pt-2 w-full max-w-3xl mx-auto">
+        <div className="relative bg-[#2f2f2f] rounded-[28px] border border-white/5 p-2 focus-within:border-white/20 transition-all shadow-2xl">
+          <div className="flex items-end gap-2 px-1">
+            <button className="w-10 h-10 flex items-center justify-center rounded-full text-white/60 hover:bg-white/5 transition-colors mb-0.5">
+              <Plus size={24} />
+            </button>
+            <textarea
+              ref={textareaRef}
+              rows="1"
+              value={inputText}
+              onKeyDown={handleKeyDown}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Ask anything"
+              className="flex-1 bg-transparent border-none outline-none py-3 text-[16px] placeholder:text-white/40 resize-none max-h-48 scrollbar-hide"
+              onInput={(e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+              }}
+            />
+            <div className="flex items-center gap-1 pr-1 mb-0.5">
+              {!inputText && (
+                <button className="w-10 h-10 flex items-center justify-center rounded-full text-white/60 hover:bg-white/5 transition-colors">
+                  <Mic size={22} />
+                </button>
+              )}
+              <button 
+                onClick={handleSendMessage}
+                disabled={!inputText.trim()}
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${
+                  inputText.trim() ? 'bg-white text-black scale-100' : 'text-white/20 scale-90'
+                }`}
+              >
+                <ArrowUp size={22} strokeWidth={2.5} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
