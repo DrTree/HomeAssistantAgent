@@ -11,17 +11,19 @@ export function Composer({ value, onChange, onSubmit, isBusy }: ComposerProps) {
   const isDisabled = !value.trim() || isBusy;
 
   return (
-    <form className="composer" onSubmit={onSubmit}>
-      <input
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder="Ask about automations, sensors, or setup tips…"
-        aria-label="Message"
-        disabled={isBusy}
-      />
-      <button type="submit" disabled={isDisabled}>
-        Send
-      </button>
-    </form>
+    <div className="composer-dock">
+      <form className="composer" onSubmit={onSubmit}>
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="Ask about automations, sensors, or setup tips…"
+          aria-label="Message"
+          disabled={isBusy}
+        />
+        <button type="submit" disabled={isDisabled} aria-label="Send message">
+          Send
+        </button>
+      </form>
+    </div>
   );
 }

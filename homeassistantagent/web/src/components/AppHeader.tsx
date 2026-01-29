@@ -5,16 +5,31 @@ interface AppHeaderProps {
   subtitle: string | ReactNode;
   statusText: string;
   statusClassName?: string;
+  actions?: ReactNode;
 }
 
-export function AppHeader({ title, subtitle, statusText, statusClassName }: AppHeaderProps) {
+export function AppHeader({
+  title,
+  subtitle,
+  statusText,
+  statusClassName,
+  actions,
+}: AppHeaderProps) {
   return (
     <header className="app__header">
-      <div>
+      <div className="app__header-main">
         <h1>{title}</h1>
         <p>{subtitle}</p>
       </div>
-      <span className={`status${statusClassName ? ` ${statusClassName}` : ''}`}>{statusText}</span>
+      <div className="app__header-actions">
+        {actions}
+        <span
+          className={`status${statusClassName ? ` ${statusClassName}` : ''}`}
+          aria-live="polite"
+        >
+          {statusText}
+        </span>
+      </div>
     </header>
   );
 }

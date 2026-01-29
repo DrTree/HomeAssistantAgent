@@ -4,10 +4,6 @@ import {
   isTextUIPart,
   isToolUIPart,
   lastAssistantMessageIsCompleteWithToolCalls,
-  StepStartUIPart,
-  UIMessagePart,
-  UIDataTypes,
-  UITools
 } from 'ai';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import './App.css';
@@ -91,6 +87,9 @@ export default function App() {
     }
 
     return message.parts.map((part, index) => {
+      if ('type' in part && part.type === 'reasoning') {
+        return null;
+      }
       if (isTextUIPart(part)) {
         return (
           <p key={`${message.id}-text-${index}`} className="chat__text">
@@ -140,8 +139,8 @@ export default function App() {
     }
   };
 
-  const statusText = isReady ? 'Ready' : isError ? 'Offline' : 'Thinking…';
-  const statusClassName = `${isReady ? '' : 'status--active'}${isError ? ' status--error' : ''}`.trim();
+  const statusText = isError ? 'Offline' : isBusy ? 'Responding' : 'Stopped';
+  const statusClassName = `${isBusy ? 'status--active' : ''}${isError ? ' status--error' : ''}`.trim();
 
   return (
     <div className="app">
@@ -150,16 +149,17 @@ export default function App() {
         subtitle="Ask questions about Home Assistant and get concise guidance."
         statusText={statusText}
         statusClassName={statusClassName}
-      />
-
-      <ModelSelector
-        modelOptions={modelOptions}
-        selectedModel={selectedModel}
-        onChange={setSelectedModel}
-        debugMessages={logMessages}
-        onDebugChange={setLogMessages}
-        onCopyMessages={onCopyMessages}
-        copyDisabled={messages.length === 0}
+        actions={
+          <ModelSelector
+            modelOptions={modelOptions}
+            selectedModel={selectedModel}
+            onChange={setSelectedModel}
+            debugMessages={logMessages}
+            onDebugChange={setLogMessages}
+            onCopyMessages={onCopyMessages}
+            copyDisabled={messages.length === 0}
+          />
+        }
       />
 
       <section className="chat">
