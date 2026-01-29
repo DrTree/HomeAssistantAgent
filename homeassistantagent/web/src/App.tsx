@@ -6,6 +6,7 @@ import {
   lastAssistantMessageIsCompleteWithToolCalls,
 } from 'ai';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import ReactMarkdown from 'react-markdown';
 import './App.css';
 import { ChatErrorBanner } from './components/ChatErrorBanner';
 import { ChatMessageList } from './components/ChatMessageList';
@@ -108,20 +109,23 @@ export default function App() {
         return null;
       }
       if (isTextUIPart(part)) {
+        if (message.role === 'assistant') {
+          return (
+            <ReactMarkdown key={`${message.id}-text-${index}`} className="chat__markdown">
+              {part.text}
+            </ReactMarkdown>
+          );
+        }
+
         return (
           <p key={`${message.id}-text-${index}`} className="chat__text">
             {part.text}
           </p>
         );
       }
-        if (isToolUIPart(part)) {
-          return (
-            <ToolMessage
-              key={`${message.id}-tool-${index}`}
-              part={part}
-            />
-          );
-        }
+      if (isToolUIPart(part)) {
+        return <ToolMessage key={`${message.id}-tool-${index}`} part={part} />;
+      }
     });
   };
 
