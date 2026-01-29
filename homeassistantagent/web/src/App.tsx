@@ -146,7 +146,6 @@ export default function App() {
     <div className="app">
       <AppHeader
         title="HomeAssistantAgent"
-        subtitle="Ask questions about Home Assistant and get concise guidance."
         statusText={statusText}
         statusClassName={statusClassName}
         actions={
