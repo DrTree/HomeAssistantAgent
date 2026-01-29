@@ -9,26 +9,87 @@
 }
 
 .app__header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(2, 6, 23, 0.96);
+  backdrop-filter: blur(12px);
+  padding: 8px 0 12px;
+}
+
+.app__header-bar {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.app__header-main h1 {
-  margin: 0 0 8px;
-  font-size: 2rem;
-}
-
-.app__header-main p {
-  margin: 0;
-  color: #94a3b8;
-}
-
-.app__header-actions {
-  display: flex;
-  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
+}
+
+.app__title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app__title-group h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  letter-spacing: 0.01em;
+}
+
+.app__menu {
+  position: relative;
+}
+
+.app__menu[open] .app__menu-panel {
+  animation: menu-fade-in 120ms ease-out;
+}
+
+.app__menu-trigger {
+  list-style: none;
+  border: none;
+  background: #111827;
+  color: #e2e8f0;
+  border-radius: 10px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  border: 1px solid #1f2937;
+}
+
+.app__menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.app__kebab {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.app__menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  min-width: 260px;
+  background: #0f172a;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.45);
+}
+
+@keyframes menu-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .status {
@@ -315,12 +376,17 @@
 
 @media (max-width: 640px) {
   .app__header {
-    gap: 12px;
+    padding-top: 6px;
   }
 
   .controls {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .app__menu-panel {
+    right: -12px;
+    min-width: 220px;
   }
 
   .composer {
@@ -334,12 +400,6 @@
 
 @media (min-width: 900px) {
   .app__header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .app__header-actions {
-    justify-content: flex-end;
+    padding-top: 12px;
   }
 }

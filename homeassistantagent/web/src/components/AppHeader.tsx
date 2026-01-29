@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 
 interface AppHeaderProps {
   title: string;
-  subtitle: string | ReactNode;
   statusText: string;
   statusClassName?: string;
   actions?: ReactNode;
@@ -10,19 +9,26 @@ interface AppHeaderProps {
 
 export function AppHeader({
   title,
-  subtitle,
   statusText,
   statusClassName,
   actions,
 }: AppHeaderProps) {
   return (
     <header className="app__header">
-      <div className="app__header-main">
-        <h1>{title}</h1>
-        <p>{subtitle}</p>
-      </div>
-      <div className="app__header-actions">
-        {actions}
+      <div className="app__header-bar">
+        <div className="app__title-group">
+          <h1>{title}</h1>
+          {actions ? (
+            <details className="app__menu">
+              <summary className="app__menu-trigger" aria-label="Open settings menu">
+                <span className="app__kebab" aria-hidden="true">
+                  ⋮
+                </span>
+              </summary>
+              <div className="app__menu-panel">{actions}</div>
+            </details>
+          ) : null}
+        </div>
         <span
           className={`status${statusClassName ? ` ${statusClassName}` : ''}`}
           aria-live="polite"
