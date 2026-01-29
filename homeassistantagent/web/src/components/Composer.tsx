@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+import { useRef, type FormEvent } from 'react';
 
 interface ComposerProps {
   value: string;
@@ -9,20 +9,49 @@ interface ComposerProps {
 
 export function Composer({ value, onChange, onSubmit, isBusy }: ComposerProps) {
   const isDisabled = !value.trim() || isBusy;
-
+  const formRef = useRef<HTMLFormElement | null>(null);
   return (
     <div className="composer-dock">
-      <form className="composer" onSubmit={onSubmit}>
-        <input
+      <form ref={formRef} className="composer" onSubmit={onSubmit}>
+        <button type="button" className="composer__icon-button" aria-label="Add attachment">
+          +
+        </button>
+        <textarea
           value={value}
+          rows={1}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Ask about automations, sensors, or setup tips…"
+          placeholder="Ask anything"
           aria-label="Message"
           disabled={isBusy}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+              event.preventDefault();
+              if (!isDisabled) {
+                formRef.current?.requestSubmit();
+              }
+            }
+          }}
+          onInput={(event) => {
+            const target = event.currentTarget;
+            target.style.height = 'auto';
+            target.style.height = `${target.scrollHeight}px`;
+          }}
         />
-        <button type="submit" disabled={isDisabled} aria-label="Send message">
-          Send
-        </button>
+        <div className="composer__actions">
+          {!value.trim() ? (
+            <button type="button" className="composer__icon-button" aria-label="Voice input">
+              🎤
+            </button>
+          ) : null}
+          <button
+            type="submit"
+            disabled={isDisabled}
+            className="composer__send"
+            aria-label="Send message"
+          >
+            ↑
+          </button>
+        </div>
       </form>
     </div>
   );
