@@ -53,7 +53,7 @@ class ChatAgent:
             output_type=[str, DeferredToolRequests],
             tools=[
                 Tool(calculator, requires_approval=True),
-                Tool(call_home_assistant_service, requires_approval=True),
+                Tool(call_home_assistant_service, requires_approval=False),
                 Tool(ha_rest_ping, requires_approval=False),
                 Tool(ha_rest_get_config, requires_approval=False),
                 Tool(ha_rest_list_components, requires_approval=False),
@@ -75,6 +75,6 @@ class ChatAgent:
                 Tool(ha_ws_area_registry_list, requires_approval=False),
                 Tool(ha_ws_resolve_from_area, requires_approval=False),
                 Tool(render_home_assistant_template, requires_approval=False),
-                Tool(set_entity_state, requires_approval=True),
+                Tool(set_entity_state, requires_approval=False),
             ],
         )

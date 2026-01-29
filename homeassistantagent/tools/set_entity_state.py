@@ -1,6 +1,9 @@
 import logging
 from typing import Any
 
+from pydantic_ai import RunContext
+from pydantic_ai.exceptions import ApprovalRequired
+
 from clients import HomeAssistantApiClient
 
 logger = logging.getLogger(__name__)
@@ -161,6 +164,7 @@ def _with_errors(response: dict[str, Any], errors: list[str]) -> dict[str, Any]:
 
 
 def set_entity_state(
+    ctx: RunContext[None],
     entity_ids: list[str],
     service: str,
     service_data: dict[str, Any] | None = None,
@@ -202,6 +206,10 @@ def set_entity_state(
             truncated,
             bool(dry_run),
         )
+
+    is_light_service = domain == "light" and service_name in {"turn_on", "turn_off", "toggle"}
+    if not is_light_service and not ctx.tool_call_approved:
+        raise ApprovalRequired
 
     if verify not in {"none", "basic"}:
         return _error_response(
