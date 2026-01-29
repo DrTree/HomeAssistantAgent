@@ -15,6 +15,13 @@ const getReasoningParts = (message: UIMessage) =>
     .map((part) => part.text.trim())
     .filter(Boolean);
 
+const getMessageText = (message: UIMessage) =>
+  message.parts
+    .filter((part): part is { type: 'text'; text: string } => 'type' in part && part.type === 'text')
+    .map((part) => part.text)
+    .join('\n')
+    .trim();
+
 export function ChatMessageList({
   messages,
   renderMessageContent,
@@ -31,10 +38,35 @@ export function ChatMessageList({
     <>
       {messages.map((message) => {
         const reasoningParts = message.role === 'assistant' ? getReasoningParts(message) : [];
+        const messageText = message.role === 'user' ? getMessageText(message) : '';
 
         return (
           <div key={message.id} className={`chat__message chat__message--${message.role}`}>
             <div className="chat__content">{renderMessageContent(message)}</div>
+            {message.role === 'user' ? (
+              <div className="chat__message-actions">
+                <button
+                  type="button"
+                  className="chat__message-action"
+                  onClick={async () => {
+                    if (!messageText || !navigator?.clipboard?.writeText) {
+                      return;
+                    }
+                    try {
+                      await navigator.clipboard.writeText(messageText);
+                    } catch (error) {
+                      console.warn('Unable to copy message', error);
+                    }
+                  }}
+                  disabled={!messageText}
+                >
+                  Copy
+                </button>
+                <button type="button" className="chat__message-action" disabled>
+                  Edit
+                </button>
+              </div>
+            ) : null}
             {reasoningParts.length > 0 ? (
               <details className="chat__reasoning">
                 <summary>Reasoning</summary>
