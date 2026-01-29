@@ -20,7 +20,7 @@ export function Composer({ value, onChange, onSubmit, isBusy }: ComposerProps) {
           value={value}
           rows={1}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Ask anything"
+          placeholder="Make this home smart…"
           aria-label="Message"
           disabled={isBusy}
           onKeyDown={(event) => {
@@ -38,11 +38,6 @@ export function Composer({ value, onChange, onSubmit, isBusy }: ComposerProps) {
           }}
         />
         <div className="composer__actions">
-          {!value.trim() ? (
-            <button type="button" className="composer__icon-button" aria-label="Voice input">
-              🎤
-            </button>
-          ) : null}
           <button
             type="submit"
             disabled={isDisabled}
