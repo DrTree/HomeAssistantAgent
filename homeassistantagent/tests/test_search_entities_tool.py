@@ -49,3 +49,38 @@ class SearchEntitiesToolTests(unittest.TestCase):
 
         self.assertFalse(result["ok"])
         self.assertEqual(result["error"]["code"], "INVALID_RESPONSE")
+
+    def test_search_entities_prefers_kitchen_cabinets_for_cabinet_lights_query(self) -> None:
+        states = [
+            {
+                "entity_id": "light.garage_lights_switch_0",
+                "state": "off",
+                "attributes": {"friendly_name": "Garage Lights"},
+            },
+            {
+                "entity_id": "switch.garage_lights_switch_0",
+                "state": "off",
+                "attributes": {"friendly_name": "Garage Lights"},
+            },
+            {
+                "entity_id": "switch.play_1_crossfade",
+                "state": "off",
+                "attributes": {"friendly_name": "Kitchen Cross-fade"},
+            },
+            {
+                "entity_id": "light.kitchen_cabinets",
+                "state": "off",
+                "attributes": {"friendly_name": "Kitchen Cabinets"},
+            },
+            {
+                "entity_id": "light.kitchen_lamp",
+                "state": "off",
+                "attributes": {"friendly_name": "Living Room Lamp 1"},
+            },
+        ]
+        with patch.object(search_entities_module, "home_assistant_client") as client:
+            client.list_states = MagicMock(return_value=states)
+            result = search_entities_module.search_entities("kitchen cabinet lights", limit=5)
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["matches"][0]["entity_id"], "light.kitchen_cabinets")

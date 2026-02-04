@@ -1,9 +1,10 @@
 ## DOCS: docs/tool_specs/search_entities.md
 import logging
+import re
 import time
 from typing import Any
 
-from rapidfuzz import fuzz, process, utils
+from rapidfuzz import fuzz, process
 
 from clients import HomeAssistantApiClient
 
@@ -24,6 +25,19 @@ def _entity_domain(entity_id: str | None) -> str:
 def _build_search_text(entity_id: str | None, name: str | None) -> str:
     parts = [part for part in (entity_id, name) if isinstance(part, str) and part]
     return " ".join(parts)
+
+
+_TOKEN_CLEAN_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _normalize_text(text: str) -> str:
+    normalized = _TOKEN_CLEAN_RE.sub(" ", text.lower().replace(".", " ").replace("_", " "))
+    tokens = []
+    for token in normalized.split():
+        if len(token) > 3 and token.endswith("s"):
+            token = token[:-1]
+        tokens.append(token)
+    return " ".join(tokens)
 
 
 def search_entities(query: str, limit: int = 10) -> dict[str, Any]:
@@ -111,8 +125,8 @@ def search_entities(query: str, limit: int = 10) -> dict[str, Any]:
     matches = process.extract(
         query,
         candidates,
-        scorer=fuzz.WRatio,
-        processor=utils.default_process,
+        scorer=fuzz.token_set_ratio,
+        processor=_normalize_text,
         limit=limit,
     )
 
