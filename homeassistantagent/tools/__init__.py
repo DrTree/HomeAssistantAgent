@@ -21,6 +21,7 @@ from .home_assistant_rest import (
     ha_rest_set_state,
 )
 from .home_assistant_ws import ha_ws_area_registry_list, ha_ws_resolve_from_area
+from .ha_search_services import ha_search_services
 from .render_home_assistant_template import render_home_assistant_template
 from .search_entities import search_entities
 from .set_entity_state import set_entity_state
@@ -48,6 +49,7 @@ __all__ = [
     "ha_rest_handle_intent",
     "ha_ws_area_registry_list",
     "ha_ws_resolve_from_area",
+    "ha_search_services",
     "render_home_assistant_template",
     "search_entities",
     "set_entity_state",
